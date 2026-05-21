@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import '../data/models/subtitle_cue.dart';
@@ -59,11 +60,17 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
         final content = await File(subtitlePath).readAsString();
         _cues = SrtParser.parse(content);
         _ref.read(subtitleCuesProvider.notifier).state = _cues;
-      } catch (_) {
+        debugPrint('[Player] Loaded ${_cues.length} subtitle cues from $subtitlePath');
+        if (_cues.isNotEmpty) {
+          debugPrint('[Player] First cue: ${_cues.first.start} - ${_cues.first.end}: ${_cues.first.text}');
+        }
+      } catch (e) {
+        debugPrint('[Player] Error loading subtitles: $e');
         _cues = [];
         _ref.read(subtitleCuesProvider.notifier).state = [];
       }
     } else {
+      debugPrint('[Player] No subtitle file: $subtitlePath (exists: ${subtitlePath != null ? await File(subtitlePath!).exists() : "null"})');
       _cues = [];
       _ref.read(subtitleCuesProvider.notifier).state = [];
     }
@@ -75,6 +82,7 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
 
   void _startSync() {
     _positionSub?.cancel();
+    int _logCount = 0;
     _positionSub = player.stream.position.listen((pos) {
       if (pos == _lastPosition) return;
       _lastPosition = pos;
@@ -82,6 +90,10 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
         milliseconds: pos.inMilliseconds + _offsetMs,
       );
       final cue = _findActiveCue(adjusted);
+      if (_logCount < 5 && cue != null) {
+        debugPrint('[Player] Cue active at ${pos.inMilliseconds}ms: ${cue.text}');
+        _logCount++;
+      }
       _ref.read(activeCueProvider.notifier).state = cue;
     });
   }

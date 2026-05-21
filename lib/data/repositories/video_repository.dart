@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -34,18 +35,61 @@ class VideoRepository {
     final path = file.path;
     if (path == null) return null;
 
+    debugPrint('[VideoRepo] picked file: $path');
+
     final id = _uuid.v4();
     final title = p.basenameWithoutExtension(path);
-    final thumbPath = await _generateThumbnail(path, id);
 
-    await _db.insertVideo(VideosCompanion.insert(
-      id: id,
-      title: title,
-      filePath: path,
-      thumbnailPath: Value(thumbPath),
-    ));
+    String? thumbPath;
+    try {
+      thumbPath = await _generateThumbnail(path, id);
+      debugPrint('[VideoRepo] thumbnail: $thumbPath');
+    } catch (e) {
+      debugPrint('[VideoRepo] thumbnail error: $e');
+    }
+
+    String? subtitlePath;
+    try {
+      subtitlePath = await _findMatchingSubtitle(path, id);
+      debugPrint('[VideoRepo] subtitle: $subtitlePath');
+    } catch (e) {
+      debugPrint('[VideoRepo] subtitle search error: $e');
+    }
+
+    try {
+      await _db.insertVideo(VideosCompanion.insert(
+        id: id,
+        title: title,
+        filePath: path,
+        thumbnailPath: Value(thumbPath),
+        subtitlePath: Value(subtitlePath),
+      ));
+      debugPrint('[VideoRepo] inserted video id=$id');
+    } catch (e) {
+      debugPrint('[VideoRepo] DB insert error: $e');
+      return null;
+    }
 
     return _db.getVideo(id);
+  }
+
+  Future<String?> _findMatchingSubtitle(String videoPath, String videoId) async {
+    final videoFile = File(videoPath);
+    final dir = videoFile.parent.path;
+    final baseName = p.basenameWithoutExtension(videoPath);
+
+    for (final ext in ['srt', 'vtt']) {
+      final candidate = File(p.join(dir, '$baseName.$ext'));
+      if (await candidate.exists()) {
+        final appDir = await getApplicationDocumentsDirectory();
+        final subtitleDir = Directory(p.join(appDir.path, 'subtitles'));
+        await subtitleDir.create(recursive: true);
+        final destPath = p.join(subtitleDir.path, '$videoId.$ext');
+        await candidate.copy(destPath);
+        return destPath;
+      }
+    }
+    return null;
   }
 
   Future<String?> importSubtitle(String videoId) async {

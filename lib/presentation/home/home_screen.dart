@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -40,11 +41,21 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Future<void> _importVideo(BuildContext context, WidgetRef ref) async {
-    final video = await ref.read(videoRepositoryProvider).importVideo();
-    if (video == null && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('未选择视频')),
-      );
+    try {
+      final video = await ref.read(videoRepositoryProvider).importVideo();
+      debugPrint('[HomeScreen] importVideo result: ${video?.id}');
+      if (video == null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('未选择视频')),
+        );
+      }
+    } catch (e, st) {
+      debugPrint('[HomeScreen] importVideo error: $e\n$st');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('导入失败: $e')),
+        );
+      }
     }
   }
 }
