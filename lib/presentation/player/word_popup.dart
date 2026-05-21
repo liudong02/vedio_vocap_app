@@ -151,6 +151,18 @@ class _WordPopupState extends ConsumerState<WordPopup> {
                     ),
                 ],
               ),
+              // Chinese translation
+              if (_definition?.chineseTranslation != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    _definition!.chineseTranslation!,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                ),
               const SizedBox(height: 4),
 
               // Context sentence
@@ -205,12 +217,15 @@ class _WordPopupState extends ConsumerState<WordPopup> {
 
   Widget _buildDefinitions(ScrollController controller) {
     final def = _definition!;
+    if (def.meanings.isEmpty) {
+      return const Center(child: Text('暂无详细释义'));
+    }
     return ListView(
       controller: controller,
       children: [
         for (final meaning in def.meanings) ...[
           Chip(
-            label: Text(meaning.partOfSpeech),
+            label: Text(_translatePartOfSpeech(meaning.partOfSpeech)),
             backgroundColor: Theme.of(context).colorScheme.primaryContainer,
             labelStyle: TextStyle(
               color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -231,7 +246,7 @@ class _WordPopupState extends ConsumerState<WordPopup> {
                     Padding(
                       padding: const EdgeInsets.only(top: 2, left: 8),
                       child: Text(
-                        '例：${meaning.definitions[i].example}',
+                        '例: ${meaning.definitions[i].example}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Colors.grey[600],
                               fontStyle: FontStyle.italic,
@@ -244,5 +259,21 @@ class _WordPopupState extends ConsumerState<WordPopup> {
         ],
       ],
     );
+  }
+
+  String _translatePartOfSpeech(String pos) {
+    const map = {
+      'noun': '名词',
+      'verb': '动词',
+      'adjective': '形容词',
+      'adverb': '副词',
+      'pronoun': '代词',
+      'preposition': '介词',
+      'conjunction': '连词',
+      'interjection': '感叹词',
+      'determiner': '限定词',
+      'exclamation': '感叹词',
+    };
+    return map[pos.toLowerCase()] ?? pos;
   }
 }

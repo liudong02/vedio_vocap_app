@@ -3,12 +3,14 @@ class WordDefinition {
   final String? phonetic;
   final List<WordMeaning> meanings;
   final String? audioUrl;
+  final String? chineseTranslation;
 
   const WordDefinition({
     required this.word,
     this.phonetic,
     required this.meanings,
     this.audioUrl,
+    this.chineseTranslation,
   });
 
   factory WordDefinition.fromJson(Map<String, dynamic> json) {
@@ -32,10 +34,19 @@ class WordDefinition {
     );
   }
 
+  WordDefinition copyWith({String? chineseTranslation}) => WordDefinition(
+        word: word,
+        phonetic: phonetic,
+        meanings: meanings,
+        audioUrl: audioUrl,
+        chineseTranslation: chineseTranslation ?? this.chineseTranslation,
+      );
+
   Map<String, dynamic> toJson() => {
         'word': word,
         'phonetic': phonetic,
         'audioUrl': audioUrl,
+        'chineseTranslation': chineseTranslation,
         'meanings': meanings.map((m) => m.toJson()).toList(),
       };
 
@@ -44,6 +55,7 @@ class WordDefinition {
       word: json['word'] as String,
       phonetic: json['phonetic'] as String?,
       audioUrl: json['audioUrl'] as String?,
+      chineseTranslation: json['chineseTranslation'] as String?,
       meanings: (json['meanings'] as List? ?? [])
           .map((m) => WordMeaning.fromJson(m as Map<String, dynamic>))
           .toList(),

@@ -23,31 +23,71 @@ class DictionaryService {
     final cached = await _db.getCachedDefinition(normalized);
     if (cached != null) {
       try {
-        final list = jsonDecode(cached.responseJson) as List;
-        if (list.isNotEmpty) {
-          return WordDefinition.fromJson(list.first as Map<String, dynamic>);
+        final decoded = jsonDecode(cached.responseJson);
+        if (decoded is Map<String, dynamic> && decoded.containsKey('combined')) {
+          return WordDefinition.fromStoredJson(decoded['combined'] as Map<String, dynamic>);
+        }
+        // Legacy cache format (raw API response list)
+        if (decoded is List && decoded.isNotEmpty) {
+          final def = WordDefinition.fromJson(decoded.first as Map<String, dynamic>);
+          final chinese = await _translateWord(normalized);
+          final result = def.copyWith(chineseTranslation: chinese);
+          await _db.cacheDefinition(normalized, jsonEncode({'combined': result.toJson()}));
+          return result;
         }
       } catch (_) {}
     }
 
-    // 2. Fetch from API
+    // 2. Fetch English definition from Free Dictionary API
+    WordDefinition? definition;
     try {
       final response = await http
           .get(Uri.parse('$_baseUrl/$normalized'))
           .timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
-        final json = response.body;
-        await _db.cacheDefinition(normalized, json);
-        final list = jsonDecode(json) as List;
+        final list = jsonDecode(response.body) as List;
         if (list.isNotEmpty) {
-          return WordDefinition.fromJson(list.first as Map<String, dynamic>);
+          definition = WordDefinition.fromJson(list.first as Map<String, dynamic>);
         }
       }
-    } catch (_) {
-      // Network error — return null, caller handles gracefully
+    } catch (_) {}
+
+    // 3. Fetch Chinese translation
+    final chinese = await _translateWord(normalized);
+
+    if (definition != null) {
+      definition = definition.copyWith(chineseTranslation: chinese);
+    } else if (chinese != null) {
+      definition = WordDefinition(
+        word: normalized,
+        meanings: [],
+        chineseTranslation: chinese,
+      );
     }
 
+    // 4. Cache combined result
+    if (definition != null) {
+      await _db.cacheDefinition(normalized, jsonEncode({'combined': definition.toJson()}));
+    }
+
+    return definition;
+  }
+
+  Future<String?> _translateWord(String word) async {
+    try {
+      final url = Uri.parse(
+        'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(word)}&langpair=en|zh-CN',
+      );
+      final response = await http.get(url).timeout(const Duration(seconds: 6));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final translated = data['responseData']?['translatedText'] as String?;
+        if (translated != null && translated.isNotEmpty && translated != word) {
+          return translated;
+        }
+      }
+    } catch (_) {}
     return null;
   }
 }

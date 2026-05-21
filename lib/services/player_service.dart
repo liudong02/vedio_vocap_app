@@ -70,7 +70,7 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
         _ref.read(subtitleCuesProvider.notifier).state = [];
       }
     } else {
-      debugPrint('[Player] No subtitle file: $subtitlePath (exists: ${subtitlePath != null ? await File(subtitlePath!).exists() : "null"})');
+      debugPrint('[Player] No subtitle file: $subtitlePath');
       _cues = [];
       _ref.read(subtitleCuesProvider.notifier).state = [];
     }
@@ -82,7 +82,6 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
 
   void _startSync() {
     _positionSub?.cancel();
-    int _logCount = 0;
     _positionSub = player.stream.position.listen((pos) {
       if (pos == _lastPosition) return;
       _lastPosition = pos;
@@ -90,10 +89,6 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
         milliseconds: pos.inMilliseconds + _offsetMs,
       );
       final cue = _findActiveCue(adjusted);
-      if (_logCount < 5 && cue != null) {
-        debugPrint('[Player] Cue active at ${pos.inMilliseconds}ms: ${cue.text}');
-        _logCount++;
-      }
       _ref.read(activeCueProvider.notifier).state = cue;
     });
   }

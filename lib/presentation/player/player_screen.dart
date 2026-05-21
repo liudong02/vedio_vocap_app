@@ -65,7 +65,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                   children: [
                     if (_videoController != null)
                       Center(
-                        child: Video(controller: _videoController!),
+                        child: Video(
+                          controller: _videoController!,
+                          controls: (state) => const SizedBox.shrink(),
+                        ),
                       ),
 
                     // Subtitle overlay (always visible over video)
