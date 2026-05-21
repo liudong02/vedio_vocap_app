@@ -1,0 +1,62 @@
+name: video_vocab
+description: English video vocabulary learning app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+# Tell sqlite3 hook to use system library (avoids GitHub download in restricted networks)
+hooks:
+  user_defines:
+    sqlite3:
+      source: system
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Video playback
+  media_kit: ^1.1.10
+  media_kit_video: ^1.2.4
+  media_kit_libs_video: ^1.0.4
+
+  # File operations
+  file_picker: ^8.1.2
+  path_provider: ^2.1.4
+  path: ^1.9.0
+
+  # Screenshot / frame capture
+  video_thumbnail: ^0.5.3
+
+  # Networking
+  http: ^1.2.2
+
+  # Database (drift requires build_runner once for codegen)
+  drift: ^2.22.0
+  sqlite3_flutter_libs: ^0.5.22
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Navigation
+  go_router: ^14.2.7
+
+  # Utilities
+  uuid: ^4.4.2
+  intl: ^0.19.0
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  # Drift code generation — run once: dart run build_runner build
+  build_runner: ^2.4.12
+  drift_dev: ^2.22.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
