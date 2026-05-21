@@ -23,6 +23,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _initPlayer();
   }
 
+  @override
+  void dispose() {
+    ref.read(playerNotifierProvider.notifier).pause();
+    _videoController = null;
+    super.dispose();
+  }
+
   Future<void> _initPlayer() async {
     final player = ref.read(playerProvider);
     _videoController = VideoController(player);
@@ -143,6 +150,7 @@ class _SubtitleOffsetButton extends ConsumerWidget {
       builder: (ctx) => _OffsetDialog(
         onChanged: (ms) {
           ref.read(playerNotifierProvider.notifier).setSubtitleOffset(ms);
+          ref.read(videoRepositoryProvider).updateSubtitleOffset(videoId, ms);
         },
       ),
     );

@@ -5,7 +5,7 @@ import 'package:media_kit/media_kit.dart';
 import '../data/models/subtitle_cue.dart';
 import '../core/utils/srt_parser.dart';
 
-final playerProvider = Provider.autoDispose<Player>((ref) {
+final playerProvider = Provider<Player>((ref) {
   final player = Player();
   ref.onDispose(player.dispose);
   return player;
@@ -52,15 +52,20 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
   }) async {
     state = state.copyWith(isLoading: true);
     _offsetMs = subtitleOffsetMs;
+    _ref.read(activeCueProvider.notifier).state = null;
 
-    if (subtitlePath != null) {
+    if (subtitlePath != null && await File(subtitlePath).exists()) {
       try {
         final content = await File(subtitlePath).readAsString();
         _cues = SrtParser.parse(content);
         _ref.read(subtitleCuesProvider.notifier).state = _cues;
       } catch (_) {
         _cues = [];
+        _ref.read(subtitleCuesProvider.notifier).state = [];
       }
+    } else {
+      _cues = [];
+      _ref.read(subtitleCuesProvider.notifier).state = [];
     }
 
     _startSync();
@@ -122,6 +127,6 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
 }
 
 final playerNotifierProvider =
-    StateNotifierProvider.autoDispose<PlayerNotifier, PlayerStateData>((ref) {
+    StateNotifierProvider<PlayerNotifier, PlayerStateData>((ref) {
   return PlayerNotifier(ref);
 });

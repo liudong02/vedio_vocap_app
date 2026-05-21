@@ -56,12 +56,20 @@ class VideoRepository {
     );
     if (result == null || result.files.isEmpty) return null;
 
-    final path = result.files.first.path;
-    if (path == null) return null;
+    final pickedPath = result.files.first.path;
+    if (pickedPath == null) return null;
 
-    await _db.updateVideo(videoId, VideosCompanion(subtitlePath: Value(path)));
+    final dir = await getApplicationDocumentsDirectory();
+    final subtitleDir = Directory(p.join(dir.path, 'subtitles'));
+    await subtitleDir.create(recursive: true);
 
-    return path;
+    final ext = p.extension(pickedPath);
+    final destPath = p.join(subtitleDir.path, '$videoId$ext');
+    await File(pickedPath).copy(destPath);
+
+    await _db.updateVideo(videoId, VideosCompanion(subtitlePath: Value(destPath)));
+
+    return destPath;
   }
 
   Future<void> updateSubtitleOffset(String videoId, int offsetMs) async {
