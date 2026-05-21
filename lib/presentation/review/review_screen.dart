@@ -2,9 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/app_colors.dart';
 import '../../data/database/app_database.dart';
 import '../../data/models/word_definition.dart';
 import '../../data/repositories/word_repository.dart';
+import '../widgets/gradient_button.dart';
+import '../widgets/gradient_icon.dart';
+import '../widgets/soft_card.dart';
 
 class ReviewScreen extends ConsumerStatefulWidget {
   const ReviewScreen({super.key});
@@ -58,40 +62,141 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('今日复习'),
-        actions: [
+    return Container(
+      decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // Header
+            _buildHeader(context),
+
+            // Progress bar
+            if (!_sessionDone && !_loading && _dueCards.isNotEmpty)
+              _buildProgressBar(),
+
+            // Body
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _sessionDone
+                      ? _DoneView(
+                          reviewedCount: _dueCards.length,
+                          onReload: () {
+                            setState(() {
+                              _currentIndex = 0;
+                              _revealed = false;
+                              _loading = true;
+                              _sessionDone = false;
+                            });
+                            _loadDueCards();
+                          },
+                        )
+                      : _FlashCard(
+                          card: _currentCard,
+                          revealed: _revealed,
+                          onReveal: _reveal,
+                          onGrade: _grade,
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Row(
+        children: [
+          Text('今日复习', style: Theme.of(context).textTheme.headlineMedium),
+          const Spacer(),
           if (!_sessionDone && !_loading && _dueCards.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: Text(
-                  '${_currentIndex + 1} / ${_dueCards.length}',
-                  style: Theme.of(context).textTheme.bodyMedium,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${_currentIndex + 1} / ${_dueCards.length}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _sessionDone
-              ? _DoneView(onReload: () {
-                  setState(() {
-                    _currentIndex = 0;
-                    _revealed = false;
-                    _loading = true;
-                    _sessionDone = false;
-                  });
-                  _loadDueCards();
-                })
-              : _FlashCard(
-                  card: _currentCard,
-                  revealed: _revealed,
-                  onReveal: _reveal,
-                  onGrade: _grade,
-                ),
+    );
+  }
+
+  Widget _buildProgressBar() {
+    final progress = (_currentIndex) / _dueCards.length;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        height: 3,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(2),
+        ),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: AnimatedFractionallySizedBox(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            widthFactor: progress.clamp(0.0, 1.0),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class AnimatedFractionallySizedBox extends ImplicitlyAnimatedWidget {
+  final double widthFactor;
+  final Widget child;
+
+  const AnimatedFractionallySizedBox({
+    super.key,
+    required super.duration,
+    super.curve,
+    required this.widthFactor,
+    required this.child,
+  });
+
+  @override
+  AnimatedWidgetBaseState<AnimatedFractionallySizedBox> createState() =>
+      _AnimatedFractionallySizedBoxState();
+}
+
+class _AnimatedFractionallySizedBoxState
+    extends AnimatedWidgetBaseState<AnimatedFractionallySizedBox> {
+  Tween<double>? _widthFactor;
+
+  @override
+  void forEachTween(TweenVisitor<dynamic> visitor) {
+    _widthFactor = visitor(
+      _widthFactor,
+      widget.widthFactor,
+      (dynamic value) => Tween<double>(begin: value as double),
+    ) as Tween<double>?;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionallySizedBox(
+      widthFactor: _widthFactor?.evaluate(animation) ?? widget.widthFactor,
+      child: widget.child,
     );
   }
 }
@@ -120,100 +225,130 @@ class _FlashCard extends StatelessWidget {
 
     return Column(
       children: [
-        // Progress indicator
-        const LinearProgressIndicator(
-          value: null,
-          backgroundColor: Colors.transparent,
-        ),
-
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Screenshot
-                if (card.screenshotPath != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.file(
-                      File(card.screenshotPath!),
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                    ),
-                  ),
-                const SizedBox(height: 16),
-
-                // Context (always shown)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '"${card.context}"',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 15),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Word (always shown)
-                Text(
-                  card.word,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                if (card.phonetic != null)
-                  Text(card.phonetic!,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-                const SizedBox(height: 24),
-
-                // Revealed: show definition
-                if (revealed && def != null) ...[
-                  const Divider(),
-                  const SizedBox(height: 8),
-                  for (final meaning in def.meanings) ...[
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Chip(
-                        label: Text(meaning.partOfSpeech),
-                        padding: EdgeInsets.zero,
-                        labelStyle: const TextStyle(fontSize: 11),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            child: SoftCard(
+              borderRadius: 24,
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  // Screenshot
+                  if (card.screenshotPath != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.file(
+                        File(card.screenshotPath!),
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                       ),
                     ),
-                    for (final d in meaning.definitions)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4, left: 8),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text('• ${d.definition}'),
-                        ),
+                  const SizedBox(height: 16),
+
+                  // Context
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0x0D7B61FF),
+                      border: Border.all(color: const Color(0x1A7B61FF)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '"${card.context}"',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                        height: 1.5,
                       ),
-                  ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Word
+                  GradientText(
+                    text: card.word,
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (card.phonetic != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(card.phonetic!,
+                          style: const TextStyle(
+                              color: AppColors.textTertiary, fontSize: 14)),
+                    ),
+                  const SizedBox(height: 20),
+
+                  // Revealed definitions
+                  if (revealed && def != null)
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      child: Column(
+                        children: [
+                          const Divider(height: 1),
+                          const SizedBox(height: 12),
+                          if (def.chineseTranslation != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                def.chineseTranslation!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primaryPurple,
+                                ),
+                              ),
+                            ),
+                          for (final meaning in def.meanings) ...[
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child:
+                                  Chip(label: Text(meaning.partOfSpeech)),
+                            ),
+                            for (final d in meaning.definitions)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(bottom: 6, left: 8),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    '• ${d.definition}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ],
+                      ),
+                    ),
                 ],
-
-                if (!revealed)
-                  const SizedBox(height: 40),
-              ],
+              ),
             ),
           ),
         ),
 
         // Action buttons
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: revealed
               ? _GradeButtons(onGrade: onGrade)
               : SizedBox(
                   width: double.infinity,
-                  child: FilledButton(
+                  child: GradientButton(
+                    label: '显示答案',
+                    height: 56,
                     onPressed: onReveal,
-                    child: const Text('显示答案'),
                   ),
                 ),
         ),
@@ -232,18 +367,18 @@ class _GradeButtons extends StatelessWidget {
       children: [
         Expanded(
           child: _GradeBtn(
-            label: '完全忘记',
-            sublabel: '明天再来',
-            color: Colors.red,
+            label: '忘记',
+            sublabel: '重来',
+            color: AppColors.gradeAgain,
             onTap: () => onGrade(0),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: _GradeBtn(
-            label: '有点印象',
-            sublabel: '需要加强',
-            color: Colors.orange,
+            label: '模糊',
+            sublabel: '加强',
+            color: AppColors.gradeHard,
             onTap: () => onGrade(3),
           ),
         ),
@@ -251,17 +386,17 @@ class _GradeButtons extends StatelessWidget {
         Expanded(
           child: _GradeBtn(
             label: '记得',
-            sublabel: '稍有困难',
-            color: Colors.blue,
+            sublabel: '稍难',
+            color: AppColors.gradeGood,
             onTap: () => onGrade(4),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: _GradeBtn(
-            label: '完全记得',
-            sublabel: '轻松回忆',
-            color: Colors.green,
+            label: '简单',
+            sublabel: '轻松',
+            color: AppColors.gradeEasy,
             onTap: () => onGrade(5),
           ),
         ),
@@ -285,26 +420,26 @@ class _GradeBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        height: 68,
         decoration: BoxDecoration(
           color: color.withAlpha(20),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withAlpha(80)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withAlpha(76)),
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+                    fontSize: 14, fontWeight: FontWeight.w600, color: color)),
+            const SizedBox(height: 2),
             Text(sublabel,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 10, color: color.withAlpha(180))),
+                style: TextStyle(fontSize: 11, color: color.withAlpha(180))),
           ],
         ),
       ),
@@ -313,33 +448,55 @@ class _GradeBtn extends StatelessWidget {
 }
 
 class _DoneView extends StatelessWidget {
+  final int reviewedCount;
   final VoidCallback onReload;
-  const _DoneView({required this.onReload});
+  const _DoneView({required this.reviewedCount, required this.onReload});
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.check_circle_outline, size: 80, color: Colors.green),
-          const SizedBox(height: 16),
-          Text(
-            '今日复习完成！',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '继续积累，明天再来',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: onReload,
-            icon: const Icon(Icons.refresh),
-            label: const Text('刷新'),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const GradientIcon(icon: Icons.celebration_rounded, size: 80),
+            const SizedBox(height: 24),
+            Text(
+              '太棒了!',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '今日复习已完成',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '已复习 $reviewedCount 个单词',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            OutlinedButton.icon(
+              onPressed: onReload,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('刷新'),
+            ),
+          ],
+        ),
       ),
     );
   }

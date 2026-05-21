@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/app_colors.dart';
 import '../../data/models/word_definition.dart';
 import '../../data/repositories/video_repository.dart';
 import '../../data/repositories/word_repository.dart';
 import '../../services/dictionary_service.dart';
 import '../../services/screenshot_service.dart';
+import '../widgets/bottom_sheet_handle.dart';
+import '../widgets/gradient_button.dart';
+import '../widgets/gradient_icon.dart';
 
 class WordPopup extends ConsumerStatefulWidget {
   final String word;
@@ -64,7 +68,6 @@ class _WordPopupState extends ConsumerState<WordPopup> {
           await ref.read(videoRepositoryProvider).getVideo(widget.videoId);
       if (video == null) return;
 
-      // Capture screenshot
       final screenshotPath = await ref
           .read(screenshotServiceProvider)
           .captureAndSave(
@@ -113,22 +116,11 @@ class _WordPopupState extends ConsumerState<WordPopup> {
         minChildSize: 0.4,
         maxChildSize: 0.85,
         builder: (_, controller) => Container(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
+              const BottomSheetHandle(),
 
               // Word + phonetic
               Row(
@@ -137,77 +129,103 @@ class _WordPopupState extends ConsumerState<WordPopup> {
                 children: [
                   Text(
                     widget.word,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   if (_definition?.phonetic != null)
                     Text(
                       _definition!.phonetic!,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
+                            color: AppColors.textTertiary,
                           ),
                     ),
                 ],
               ),
-              // Chinese translation
+
+              // Chinese translation with gradient
               if (_definition?.chineseTranslation != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(
-                    _definition!.chineseTranslation!,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                  padding: const EdgeInsets.only(top: 6),
+                  child: GradientText(
+                    text: _definition!.chineseTranslation!,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
 
               // Context sentence
               Container(
-                padding: const EdgeInsets.all(8),
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withAlpha(20),
-                  borderRadius: BorderRadius.circular(6),
+                  color: const Color(0x0D7B61FF),
+                  border: Border.all(color: const Color(0x1A7B61FF)),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '"${widget.context}"',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.blueGrey[700],
-                        fontStyle: FontStyle.italic,
-                      ),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    height: 1.5,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Definitions
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _error != null
-                        ? Center(child: Text(_error!))
+                        ? Center(
+                            child: Text(_error!,
+                                style: TextStyle(color: AppColors.textSecondary)))
                         : _buildDefinitions(controller),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Save button
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _alreadySaved ? null : _saveWord,
-                  icon: _isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : Icon(_alreadySaved ? Icons.check : Icons.bookmark_add),
-                  label: Text(_alreadySaved ? '已收录' : '收录单词'),
+              if (_alreadySaved)
+                Container(
+                  width: double.infinity,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_rounded,
+                          color: AppColors.textTertiary, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        '已收录',
+                        style: TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                SizedBox(
+                  width: double.infinity,
+                  child: GradientButton(
+                    label: '收录单词',
+                    icon: Icons.bookmark_add_rounded,
+                    isLoading: _isSaving,
+                    onPressed: _saveWord,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -218,44 +236,48 @@ class _WordPopupState extends ConsumerState<WordPopup> {
   Widget _buildDefinitions(ScrollController controller) {
     final def = _definition!;
     if (def.meanings.isEmpty) {
-      return const Center(child: Text('暂无详细释义'));
+      return const Center(
+          child: Text('暂无详细释义',
+              style: TextStyle(color: AppColors.textTertiary)));
     }
     return ListView(
       controller: controller,
+      padding: EdgeInsets.zero,
       children: [
         for (final meaning in def.meanings) ...[
           Chip(
             label: Text(_translatePartOfSpeech(meaning.partOfSpeech)),
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            labelStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
-              fontSize: 12,
-            ),
           ),
           for (int i = 0; i < meaning.definitions.length; i++)
             Padding(
-              padding: const EdgeInsets.only(left: 8, bottom: 8),
+              padding: const EdgeInsets.only(left: 8, bottom: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     '${i + 1}. ${meaning.definitions[i].definition}',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                      height: 1.5,
+                    ),
                   ),
                   if (meaning.definitions[i].example != null)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2, left: 8),
+                      padding: const EdgeInsets.only(top: 4, left: 8),
                       child: Text(
                         '例: ${meaning.definitions[i].example}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                              fontStyle: FontStyle.italic,
-                            ),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textTertiary,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
                 ],
               ),
             ),
+          const SizedBox(height: 4),
         ],
       ],
     );

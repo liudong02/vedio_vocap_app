@@ -24,6 +24,22 @@ class VideoRepository {
 
   Future<VideoEntry?> getVideo(String id) => _db.getVideo(id);
 
+  Future<void> regenerateMissingThumbnails() async {
+    final videos = await _db.getAllVideos();
+    for (final video in videos) {
+      if (video.thumbnailPath != null &&
+          await File(video.thumbnailPath!).exists()) {
+        continue;
+      }
+      final thumbPath = await _generateThumbnail(video.filePath, video.id);
+      if (thumbPath != null) {
+        await _db.updateVideo(
+            video.id, VideosCompanion(thumbnailPath: Value(thumbPath)));
+        debugPrint('[VideoRepo] regenerated thumbnail for ${video.title}');
+      }
+    }
+  }
+
   Future<VideoEntry?> importVideo() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.video,
@@ -135,15 +151,43 @@ class VideoRepository {
       final dir = await getApplicationDocumentsDirectory();
       final thumbDir = Directory(p.join(dir.path, 'thumbnails'));
       await thumbDir.create(recursive: true);
+      final outputPath = p.join(thumbDir.path, '$id.jpg');
 
-      return VideoThumbnail.thumbnailFile(
+      if (Platform.isMacOS || Platform.isLinux) {
+        return _generateThumbnailWithFfmpeg(videoPath, outputPath);
+      }
+
+      final result = await VideoThumbnail.thumbnailFile(
         video: videoPath,
         thumbnailPath: thumbDir.path,
         imageFormat: ImageFormat.JPEG,
         maxWidth: 320,
         quality: 75,
       );
+      return result;
     } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> _generateThumbnailWithFfmpeg(
+      String videoPath, String outputPath) async {
+    try {
+      final result = await Process.run('ffmpeg', [
+        '-i', videoPath,
+        '-ss', '00:00:03',
+        '-vframes', '1',
+        '-vf', 'scale=480:-1',
+        '-y',
+        outputPath,
+      ]);
+      if (result.exitCode == 0 && await File(outputPath).exists()) {
+        return outputPath;
+      }
+      debugPrint('[VideoRepo] ffmpeg stderr: ${result.stderr}');
+      return null;
+    } catch (e) {
+      debugPrint('[VideoRepo] ffmpeg not available: $e');
       return null;
     }
   }

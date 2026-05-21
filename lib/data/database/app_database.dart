@@ -19,6 +19,9 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<VideoEntry>> watchAllVideos() =>
       (select(videos)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
 
+  Future<List<VideoEntry>> getAllVideos() =>
+      (select(videos)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
+
   Future<VideoEntry?> getVideo(String id) =>
       (select(videos)..where((t) => t.id.equals(id))).getSingleOrNull();
 

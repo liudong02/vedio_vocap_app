@@ -65,10 +65,10 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
       child: Center(
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.black.withAlpha(153),
-            borderRadius: BorderRadius.circular(4),
+            color: Colors.black.withAlpha(127),
+            borderRadius: BorderRadius.circular(10),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: RichText(
             textAlign: TextAlign.center,
             text: TextSpan(children: spans),
@@ -84,7 +84,7 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) => WordPopup(
         word: word,
@@ -93,7 +93,6 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
         videoPositionMs: ref.read(playerProvider).state.position.inMilliseconds,
       ),
     ).then((_) {
-      // Resume playback when popup is dismissed (unless user tapped save)
       ref.read(playerNotifierProvider.notifier).play();
     });
   }
@@ -110,7 +109,7 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
     fontSize: 18,
     height: 1.4,
     decoration: TextDecoration.underline,
-    decorationColor: Colors.yellowAccent,
+    decorationColor: Color(0xAAB794FF),
     decorationThickness: 1.5,
     shadows: [Shadow(blurRadius: 2, color: Colors.black)],
   );

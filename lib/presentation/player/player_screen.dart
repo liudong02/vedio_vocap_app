@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import '../../core/theme/app_colors.dart';
 import '../../data/repositories/video_repository.dart';
 import '../../services/player_service.dart';
 import 'subtitle_overlay.dart';
@@ -57,7 +58,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Video area
             Expanded(
               child: GestureDetector(
                 onTap: _toggleControls,
@@ -71,15 +71,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         ),
                       ),
 
-                    // Subtitle overlay (always visible over video)
                     Positioned(
                       left: 0,
                       right: 0,
-                      bottom: 48,
+                      bottom: 64,
                       child: SubtitleOverlay(videoId: widget.videoId),
                     ),
 
-                    // Top bar
                     if (_showControls)
                       Positioned(
                         top: 0,
@@ -92,7 +90,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
               ),
             ),
 
-            // Bottom controls
             if (_showControls)
               _BottomControls(videoId: widget.videoId),
           ],
@@ -116,23 +113,52 @@ class _TopBar extends ConsumerWidget {
           colors: [Colors.black87, Colors.transparent],
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
+          _ControlButton(
+            icon: Icons.arrow_back_rounded,
+            onTap: () {
               ref.read(playerNotifierProvider.notifier).pause();
               Navigator.of(context).pop();
             },
           ),
           const Spacer(),
-          // Subtitle offset control
           _SubtitleOffsetButton(videoId: videoId),
-          // Import subtitle
+          const SizedBox(width: 8),
           _ImportSubtitleButton(videoId: videoId),
         ],
       ),
+    );
+  }
+}
+
+class _ControlButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? tooltip;
+
+  const _ControlButton({
+    required this.icon,
+    required this.onTap,
+    this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(38),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: Colors.white, size: 22),
+    );
+
+    return GestureDetector(
+      onTap: onTap,
+      child: tooltip != null ? Tooltip(message: tooltip!, child: child) : child,
     );
   }
 }
@@ -143,10 +169,10 @@ class _SubtitleOffsetButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return IconButton(
-      icon: const Icon(Icons.tune, color: Colors.white),
+    return _ControlButton(
+      icon: Icons.tune_rounded,
       tooltip: '字幕偏移',
-      onPressed: () => _showOffsetDialog(context, ref),
+      onTap: () => _showOffsetDialog(context, ref),
     );
   }
 
@@ -211,15 +237,14 @@ class _ImportSubtitleButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return IconButton(
-      icon: const Icon(Icons.subtitles, color: Colors.white),
+    return _ControlButton(
+      icon: Icons.subtitles_rounded,
       tooltip: '导入字幕',
-      onPressed: () async {
+      onTap: () async {
         final path = await ref
             .read(videoRepositoryProvider)
             .importSubtitle(videoId);
         if (path != null && context.mounted) {
-          // Reload player with new subtitle
           final video = await ref.read(videoRepositoryProvider).getVideo(videoId);
           if (video != null) {
             await ref.read(playerNotifierProvider.notifier).loadVideo(
@@ -292,16 +317,42 @@ class _BottomControlsState extends ConsumerState<_BottomControls> {
         : _position;
 
     return Container(
-      color: Colors.black87,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+          colors: [Color(0xF0000000), Colors.transparent],
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Progress bar
+          // Time labels above slider
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(_formatDuration(displayPos),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Text(_formatDuration(_duration),
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // Gradient progress bar
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+              trackHeight: 3,
+              activeTrackColor: AppColors.primaryBlue,
+              inactiveTrackColor: Colors.white.withAlpha(50),
+              thumbColor: Colors.white,
+              overlayColor: Colors.white.withAlpha(30),
             ),
             child: Slider(
               value: displayValue.clamp(0.0, 1.0),
@@ -326,41 +377,44 @@ class _BottomControlsState extends ConsumerState<_BottomControls> {
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(_formatDuration(displayPos),
-                    style: const TextStyle(color: Colors.white, fontSize: 12)),
-                Text(_formatDuration(_duration),
-                    style: const TextStyle(color: Colors.white, fontSize: 12)),
-              ],
-            ),
-          ),
 
           // Play controls
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.replay_10, color: Colors.white),
+                icon: const Icon(Icons.replay_10_rounded, color: Colors.white),
                 onPressed: () {
                   final target = _position - const Duration(seconds: 10);
                   ref.read(playerNotifierProvider.notifier).seek(target);
                 },
               ),
-              IconButton(
-                iconSize: 48,
-                icon: Icon(
-                  _playing ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                  color: Colors.white,
+              const SizedBox(width: 16),
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withAlpha(30),
+                      blurRadius: 20,
+                    ),
+                  ],
                 ),
-                onPressed: () =>
-                    ref.read(playerNotifierProvider.notifier).togglePlayPause(),
+                child: IconButton(
+                  iconSize: 40,
+                  icon: Icon(
+                    _playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    color: Colors.white,
+                  ),
+                  onPressed: () =>
+                      ref.read(playerNotifierProvider.notifier).togglePlayPause(),
+                ),
               ),
+              const SizedBox(width: 16),
               IconButton(
-                icon: const Icon(Icons.forward_10, color: Colors.white),
+                icon: const Icon(Icons.forward_10_rounded, color: Colors.white),
                 onPressed: () {
                   final target = _position + const Duration(seconds: 10);
                   ref.read(playerNotifierProvider.notifier).seek(target);
