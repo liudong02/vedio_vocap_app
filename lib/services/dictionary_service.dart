@@ -68,10 +68,17 @@ class DictionaryService {
   }
 
   WordDefinition? _parseYoudaoResponse(String word, Map<String, dynamic> data) {
-    final ec = data['ec'] as Map<String, dynamic>?;
-    if (ec == null) return null;
+    final ecRaw = data['ec'];
+    if (ecRaw == null || ecRaw is! Map<String, dynamic>) return null;
+    final ec = ecRaw;
 
-    final ecWord = ec['word'] as Map<String, dynamic>?;
+    final wordField = ec['word'];
+    Map<String, dynamic>? ecWord;
+    if (wordField is Map<String, dynamic>) {
+      ecWord = wordField;
+    } else if (wordField is List && wordField.isNotEmpty) {
+      ecWord = wordField.first as Map<String, dynamic>?;
+    }
     if (ecWord == null) return null;
 
     // Phonetic

@@ -18,6 +18,7 @@ class PlayerScreen extends ConsumerStatefulWidget {
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   VideoController? _videoController;
   bool _showControls = true;
+  double _subtitleY = -1;
 
   @override
   void initState() {
@@ -38,6 +39,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     final video = await ref.read(videoRepositoryProvider).getVideo(widget.videoId);
     if (video == null || !mounted) return;
 
+    _subtitleY = video.subtitlePositionY;
+
     await ref.read(playerNotifierProvider.notifier).loadVideo(
           videoPath: video.filePath,
           subtitlePath: video.subtitlePath,
@@ -49,6 +52,59 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   void _toggleControls() {
     setState(() => _showControls = !_showControls);
+  }
+
+  Widget _buildDraggableSubtitle() {
+    if (_subtitleY < 0) {
+      return Positioned(
+        left: 0,
+        right: 0,
+        bottom: 64,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onVerticalDragUpdate: (details) {
+            setState(() {
+              _subtitleY = 0.75;
+              _subtitleY = (_subtitleY + details.delta.dy / 400).clamp(0.05, 0.92);
+            });
+          },
+          onVerticalDragEnd: (_) => _saveSubtitlePosition(),
+          child: SubtitleOverlay(videoId: widget.videoId),
+        ),
+      );
+    }
+
+    return Positioned.fill(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final top = _subtitleY * constraints.maxHeight;
+          return Stack(
+            children: [
+              Positioned(
+                left: 0,
+                right: 0,
+                top: top,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onVerticalDragUpdate: (details) {
+                    setState(() {
+                      _subtitleY = (_subtitleY + details.delta.dy / constraints.maxHeight)
+                          .clamp(0.05, 0.92);
+                    });
+                  },
+                  onVerticalDragEnd: (_) => _saveSubtitlePosition(),
+                  child: SubtitleOverlay(videoId: widget.videoId),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _saveSubtitlePosition() {
+    ref.read(videoRepositoryProvider).updateSubtitlePosition(widget.videoId, _subtitleY);
   }
 
   @override
@@ -71,12 +127,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                         ),
                       ),
 
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 64,
-                      child: SubtitleOverlay(videoId: widget.videoId),
-                    ),
+                    _buildDraggableSubtitle(),
 
                     if (_showControls)
                       Positioned(

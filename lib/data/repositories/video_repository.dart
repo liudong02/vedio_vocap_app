@@ -136,6 +136,10 @@ class VideoRepository {
     await _db.updateVideo(videoId, VideosCompanion(subtitleOffsetMs: Value(offsetMs)));
   }
 
+  Future<void> updateSubtitlePosition(String videoId, double positionY) async {
+    await _db.updateVideo(videoId, VideosCompanion(subtitlePositionY: Value(positionY)));
+  }
+
   Future<void> deleteVideo(String id) async {
     final video = await _db.getVideo(id);
     if (video?.thumbnailPath != null) {

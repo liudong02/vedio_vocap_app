@@ -9,6 +9,7 @@ class Videos extends Table {
   IntColumn get durationMs => integer().withDefault(const Constant(0))();
   TextColumn get thumbnailPath => text().nullable()();
   IntColumn get subtitleOffsetMs => integer().withDefault(const Constant(0))();
+  RealColumn get subtitlePositionY => real().withDefault(const Constant(-1))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override

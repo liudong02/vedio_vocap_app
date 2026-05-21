@@ -52,6 +52,14 @@ class $VideosTable extends Videos with TableInfo<$VideosTable, VideoEntry> {
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
+  static const VerificationMeta _subtitlePositionYMeta =
+      const VerificationMeta('subtitlePositionY');
+  @override
+  late final GeneratedColumn<double> subtitlePositionY =
+      GeneratedColumn<double>('subtitle_position_y', aliasedName, false,
+          type: DriftSqlType.double,
+          requiredDuringInsert: false,
+          defaultValue: const Constant(-1));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -69,6 +77,7 @@ class $VideosTable extends Videos with TableInfo<$VideosTable, VideoEntry> {
         durationMs,
         thumbnailPath,
         subtitleOffsetMs,
+        subtitlePositionY,
         createdAt
       ];
   @override
@@ -122,6 +131,12 @@ class $VideosTable extends Videos with TableInfo<$VideosTable, VideoEntry> {
           subtitleOffsetMs.isAcceptableOrUnknown(
               data['subtitle_offset_ms']!, _subtitleOffsetMsMeta));
     }
+    if (data.containsKey('subtitle_position_y')) {
+      context.handle(
+          _subtitlePositionYMeta,
+          subtitlePositionY.isAcceptableOrUnknown(
+              data['subtitle_position_y']!, _subtitlePositionYMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -149,6 +164,8 @@ class $VideosTable extends Videos with TableInfo<$VideosTable, VideoEntry> {
           .read(DriftSqlType.string, data['${effectivePrefix}thumbnail_path']),
       subtitleOffsetMs: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}subtitle_offset_ms'])!,
+      subtitlePositionY: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}subtitle_position_y'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -168,6 +185,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
   final int durationMs;
   final String? thumbnailPath;
   final int subtitleOffsetMs;
+  final double subtitlePositionY;
   final DateTime createdAt;
   const VideoEntry(
       {required this.id,
@@ -177,6 +195,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
       required this.durationMs,
       this.thumbnailPath,
       required this.subtitleOffsetMs,
+      required this.subtitlePositionY,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -192,6 +211,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
       map['thumbnail_path'] = Variable<String>(thumbnailPath);
     }
     map['subtitle_offset_ms'] = Variable<int>(subtitleOffsetMs);
+    map['subtitle_position_y'] = Variable<double>(subtitlePositionY);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -209,6 +229,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
           ? const Value.absent()
           : Value(thumbnailPath),
       subtitleOffsetMs: Value(subtitleOffsetMs),
+      subtitlePositionY: Value(subtitlePositionY),
       createdAt: Value(createdAt),
     );
   }
@@ -224,6 +245,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
       durationMs: serializer.fromJson<int>(json['durationMs']),
       thumbnailPath: serializer.fromJson<String?>(json['thumbnailPath']),
       subtitleOffsetMs: serializer.fromJson<int>(json['subtitleOffsetMs']),
+      subtitlePositionY: serializer.fromJson<double>(json['subtitlePositionY']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -238,6 +260,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
       'durationMs': serializer.toJson<int>(durationMs),
       'thumbnailPath': serializer.toJson<String?>(thumbnailPath),
       'subtitleOffsetMs': serializer.toJson<int>(subtitleOffsetMs),
+      'subtitlePositionY': serializer.toJson<double>(subtitlePositionY),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -250,6 +273,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
           int? durationMs,
           Value<String?> thumbnailPath = const Value.absent(),
           int? subtitleOffsetMs,
+          double? subtitlePositionY,
           DateTime? createdAt}) =>
       VideoEntry(
         id: id ?? this.id,
@@ -261,6 +285,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
         thumbnailPath:
             thumbnailPath.present ? thumbnailPath.value : this.thumbnailPath,
         subtitleOffsetMs: subtitleOffsetMs ?? this.subtitleOffsetMs,
+        subtitlePositionY: subtitlePositionY ?? this.subtitlePositionY,
         createdAt: createdAt ?? this.createdAt,
       );
   VideoEntry copyWithCompanion(VideosCompanion data) {
@@ -279,6 +304,9 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
       subtitleOffsetMs: data.subtitleOffsetMs.present
           ? data.subtitleOffsetMs.value
           : this.subtitleOffsetMs,
+      subtitlePositionY: data.subtitlePositionY.present
+          ? data.subtitlePositionY.value
+          : this.subtitlePositionY,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -293,6 +321,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
           ..write('durationMs: $durationMs, ')
           ..write('thumbnailPath: $thumbnailPath, ')
           ..write('subtitleOffsetMs: $subtitleOffsetMs, ')
+          ..write('subtitlePositionY: $subtitlePositionY, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -300,7 +329,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
 
   @override
   int get hashCode => Object.hash(id, title, filePath, subtitlePath, durationMs,
-      thumbnailPath, subtitleOffsetMs, createdAt);
+      thumbnailPath, subtitleOffsetMs, subtitlePositionY, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -312,6 +341,7 @@ class VideoEntry extends DataClass implements Insertable<VideoEntry> {
           other.durationMs == this.durationMs &&
           other.thumbnailPath == this.thumbnailPath &&
           other.subtitleOffsetMs == this.subtitleOffsetMs &&
+          other.subtitlePositionY == this.subtitlePositionY &&
           other.createdAt == this.createdAt);
 }
 
@@ -323,6 +353,7 @@ class VideosCompanion extends UpdateCompanion<VideoEntry> {
   final Value<int> durationMs;
   final Value<String?> thumbnailPath;
   final Value<int> subtitleOffsetMs;
+  final Value<double> subtitlePositionY;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const VideosCompanion({
@@ -333,6 +364,7 @@ class VideosCompanion extends UpdateCompanion<VideoEntry> {
     this.durationMs = const Value.absent(),
     this.thumbnailPath = const Value.absent(),
     this.subtitleOffsetMs = const Value.absent(),
+    this.subtitlePositionY = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -344,6 +376,7 @@ class VideosCompanion extends UpdateCompanion<VideoEntry> {
     this.durationMs = const Value.absent(),
     this.thumbnailPath = const Value.absent(),
     this.subtitleOffsetMs = const Value.absent(),
+    this.subtitlePositionY = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -357,6 +390,7 @@ class VideosCompanion extends UpdateCompanion<VideoEntry> {
     Expression<int>? durationMs,
     Expression<String>? thumbnailPath,
     Expression<int>? subtitleOffsetMs,
+    Expression<double>? subtitlePositionY,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -368,6 +402,7 @@ class VideosCompanion extends UpdateCompanion<VideoEntry> {
       if (durationMs != null) 'duration_ms': durationMs,
       if (thumbnailPath != null) 'thumbnail_path': thumbnailPath,
       if (subtitleOffsetMs != null) 'subtitle_offset_ms': subtitleOffsetMs,
+      if (subtitlePositionY != null) 'subtitle_position_y': subtitlePositionY,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -381,6 +416,7 @@ class VideosCompanion extends UpdateCompanion<VideoEntry> {
       Value<int>? durationMs,
       Value<String?>? thumbnailPath,
       Value<int>? subtitleOffsetMs,
+      Value<double>? subtitlePositionY,
       Value<DateTime>? createdAt,
       Value<int>? rowid}) {
     return VideosCompanion(
@@ -391,6 +427,7 @@ class VideosCompanion extends UpdateCompanion<VideoEntry> {
       durationMs: durationMs ?? this.durationMs,
       thumbnailPath: thumbnailPath ?? this.thumbnailPath,
       subtitleOffsetMs: subtitleOffsetMs ?? this.subtitleOffsetMs,
+      subtitlePositionY: subtitlePositionY ?? this.subtitlePositionY,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -420,6 +457,9 @@ class VideosCompanion extends UpdateCompanion<VideoEntry> {
     if (subtitleOffsetMs.present) {
       map['subtitle_offset_ms'] = Variable<int>(subtitleOffsetMs.value);
     }
+    if (subtitlePositionY.present) {
+      map['subtitle_position_y'] = Variable<double>(subtitlePositionY.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -439,6 +479,7 @@ class VideosCompanion extends UpdateCompanion<VideoEntry> {
           ..write('durationMs: $durationMs, ')
           ..write('thumbnailPath: $thumbnailPath, ')
           ..write('subtitleOffsetMs: $subtitleOffsetMs, ')
+          ..write('subtitlePositionY: $subtitlePositionY, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1712,6 +1753,7 @@ typedef $$VideosTableCreateCompanionBuilder = VideosCompanion Function({
   Value<int> durationMs,
   Value<String?> thumbnailPath,
   Value<int> subtitleOffsetMs,
+  Value<double> subtitlePositionY,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -1723,6 +1765,7 @@ typedef $$VideosTableUpdateCompanionBuilder = VideosCompanion Function({
   Value<int> durationMs,
   Value<String?> thumbnailPath,
   Value<int> subtitleOffsetMs,
+  Value<double> subtitlePositionY,
   Value<DateTime> createdAt,
   Value<int> rowid,
 });
@@ -1756,6 +1799,10 @@ class $$VideosTableFilterComposer
 
   ColumnFilters<int> get subtitleOffsetMs => $composableBuilder(
       column: $table.subtitleOffsetMs,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get subtitlePositionY => $composableBuilder(
+      column: $table.subtitlePositionY,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
@@ -1795,6 +1842,10 @@ class $$VideosTableOrderingComposer
       column: $table.subtitleOffsetMs,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get subtitlePositionY => $composableBuilder(
+      column: $table.subtitlePositionY,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
@@ -1828,6 +1879,9 @@ class $$VideosTableAnnotationComposer
 
   GeneratedColumn<int> get subtitleOffsetMs => $composableBuilder(
       column: $table.subtitleOffsetMs, builder: (column) => column);
+
+  GeneratedColumn<double> get subtitlePositionY => $composableBuilder(
+      column: $table.subtitlePositionY, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -1863,6 +1917,7 @@ class $$VideosTableTableManager extends RootTableManager<
             Value<int> durationMs = const Value.absent(),
             Value<String?> thumbnailPath = const Value.absent(),
             Value<int> subtitleOffsetMs = const Value.absent(),
+            Value<double> subtitlePositionY = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -1874,6 +1929,7 @@ class $$VideosTableTableManager extends RootTableManager<
             durationMs: durationMs,
             thumbnailPath: thumbnailPath,
             subtitleOffsetMs: subtitleOffsetMs,
+            subtitlePositionY: subtitlePositionY,
             createdAt: createdAt,
             rowid: rowid,
           ),
@@ -1885,6 +1941,7 @@ class $$VideosTableTableManager extends RootTableManager<
             Value<int> durationMs = const Value.absent(),
             Value<String?> thumbnailPath = const Value.absent(),
             Value<int> subtitleOffsetMs = const Value.absent(),
+            Value<double> subtitlePositionY = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -1896,6 +1953,7 @@ class $$VideosTableTableManager extends RootTableManager<
             durationMs: durationMs,
             thumbnailPath: thumbnailPath,
             subtitleOffsetMs: subtitleOffsetMs,
+            subtitlePositionY: subtitlePositionY,
             createdAt: createdAt,
             rowid: rowid,
           ),
