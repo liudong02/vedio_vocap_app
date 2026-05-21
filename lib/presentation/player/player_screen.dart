@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -25,7 +26,6 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   void dispose() {
-    ref.read(playerNotifierProvider.notifier).pause();
     _videoController = null;
     super.dispose();
   }
@@ -121,7 +121,10 @@ class _TopBar extends ConsumerWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              ref.read(playerNotifierProvider.notifier).pause();
+              Navigator.of(context).pop();
+            },
           ),
           const Spacer(),
           // Subtitle offset control
@@ -230,13 +233,63 @@ class _ImportSubtitleButton extends ConsumerWidget {
   }
 }
 
-class _BottomControls extends ConsumerWidget {
+class _BottomControls extends ConsumerStatefulWidget {
   final String videoId;
   const _BottomControls({required this.videoId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final player = ref.watch(playerProvider);
+  ConsumerState<_BottomControls> createState() => _BottomControlsState();
+}
+
+class _BottomControlsState extends ConsumerState<_BottomControls> {
+  bool _isDragging = false;
+  double _dragValue = 0.0;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
+  bool _playing = false;
+  StreamSubscription<Duration>? _posSub;
+  StreamSubscription<Duration>? _durSub;
+  StreamSubscription<bool>? _playSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupListeners();
+  }
+
+  void _setupListeners() {
+    final player = ref.read(playerProvider);
+    _posSub = player.stream.position.listen((pos) {
+      if (!_isDragging && mounted) {
+        setState(() => _position = pos);
+      }
+    });
+    _durSub = player.stream.duration.listen((dur) {
+      if (mounted) setState(() => _duration = dur);
+    });
+    _playSub = player.stream.playing.listen((playing) {
+      if (mounted) setState(() => _playing = playing);
+    });
+  }
+
+  @override
+  void dispose() {
+    _posSub?.cancel();
+    _durSub?.cancel();
+    _playSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = _duration.inMilliseconds > 0
+        ? _position.inMilliseconds / _duration.inMilliseconds
+        : 0.0;
+
+    final displayValue = _isDragging ? _dragValue : progress.clamp(0.0, 1.0);
+    final displayPos = _isDragging
+        ? Duration(milliseconds: (_dragValue * _duration.inMilliseconds).round())
+        : _position;
 
     return Container(
       color: Colors.black87,
@@ -245,51 +298,45 @@ class _BottomControls extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Progress bar
-          StreamBuilder<Duration>(
-            stream: player.stream.position,
-            builder: (context, posSnap) {
-              return StreamBuilder<Duration>(
-                stream: player.stream.duration,
-                builder: (context, durSnap) {
-                  final pos = posSnap.data ?? Duration.zero;
-                  final dur = durSnap.data ?? Duration.zero;
-                  final progress =
-                      dur.inMilliseconds > 0 ? pos.inMilliseconds / dur.inMilliseconds : 0.0;
-
-                  return Column(
-                    children: [
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                          overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-                        ),
-                        child: Slider(
-                          value: progress.clamp(0.0, 1.0),
-                          onChanged: (v) {
-                            final target = Duration(
-                              milliseconds: (v * dur.inMilliseconds).round(),
-                            );
-                            ref.read(playerNotifierProvider.notifier).seek(target);
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(_formatDuration(pos),
-                                style: const TextStyle(color: Colors.white, fontSize: 12)),
-                            Text(_formatDuration(dur),
-                                style: const TextStyle(color: Colors.white, fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+            ),
+            child: Slider(
+              value: displayValue.clamp(0.0, 1.0),
+              onChangeStart: (v) {
+                setState(() {
+                  _isDragging = true;
+                  _dragValue = v;
+                });
+              },
+              onChanged: (v) {
+                setState(() => _dragValue = v);
+              },
+              onChangeEnd: (v) {
+                final target = Duration(
+                  milliseconds: (v * _duration.inMilliseconds).round(),
+                );
+                ref.read(playerNotifierProvider.notifier).seek(target);
+                setState(() {
+                  _isDragging = false;
+                  _position = target;
+                });
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(_formatDuration(displayPos),
+                    style: const TextStyle(color: Colors.white, fontSize: 12)),
+                Text(_formatDuration(_duration),
+                    style: const TextStyle(color: Colors.white, fontSize: 12)),
+              ],
+            ),
           ),
 
           // Play controls
@@ -299,32 +346,24 @@ class _BottomControls extends ConsumerWidget {
               IconButton(
                 icon: const Icon(Icons.replay_10, color: Colors.white),
                 onPressed: () {
-                  final pos = player.state.position;
-                  ref.read(playerNotifierProvider.notifier)
-                      .seek(pos - const Duration(seconds: 10));
+                  final target = _position - const Duration(seconds: 10);
+                  ref.read(playerNotifierProvider.notifier).seek(target);
                 },
               ),
-              StreamBuilder<bool>(
-                stream: player.stream.playing,
-                builder: (context, snap) {
-                  final playing = snap.data ?? false;
-                  return IconButton(
-                    iconSize: 48,
-                    icon: Icon(
-                      playing ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                      color: Colors.white,
-                    ),
-                    onPressed: () =>
-                        ref.read(playerNotifierProvider.notifier).togglePlayPause(),
-                  );
-                },
+              IconButton(
+                iconSize: 48,
+                icon: Icon(
+                  _playing ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                  color: Colors.white,
+                ),
+                onPressed: () =>
+                    ref.read(playerNotifierProvider.notifier).togglePlayPause(),
               ),
               IconButton(
                 icon: const Icon(Icons.forward_10, color: Colors.white),
                 onPressed: () {
-                  final pos = player.state.position;
-                  ref.read(playerNotifierProvider.notifier)
-                      .seek(pos + const Duration(seconds: 10));
+                  final target = _position + const Duration(seconds: 10);
+                  ref.read(playerNotifierProvider.notifier).seek(target);
                 },
               ),
             ],

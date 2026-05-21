@@ -41,6 +41,8 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
   List<SubtitleCue> _cues = [];
   int _offsetMs = 0;
   Duration _lastPosition = Duration.zero;
+  DateTime _lastSeekTime = DateTime(2000);
+  Timer? _seekDebounce;
 
   PlayerNotifier(this._ref) : super(const PlayerStateData());
 
@@ -84,6 +86,8 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
     _positionSub?.cancel();
     _positionSub = player.stream.position.listen((pos) {
       if (pos == _lastPosition) return;
+      // Ignore position updates for 500ms after a seek to avoid stale values
+      if (DateTime.now().difference(_lastSeekTime).inMilliseconds < 500) return;
       _lastPosition = pos;
       final adjusted = Duration(
         milliseconds: pos.inMilliseconds + _offsetMs,
@@ -120,7 +124,14 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
 
   void pause() => player.pause();
   void play() => player.play();
-  void seek(Duration pos) => player.seek(pos);
+
+  void seek(Duration pos) {
+    _seekDebounce?.cancel();
+    _lastSeekTime = DateTime.now();
+    _seekDebounce = Timer(const Duration(milliseconds: 100), () {
+      player.seek(pos);
+    });
+  }
 
   void setSubtitleOffset(int ms) {
     _offsetMs = ms;
@@ -129,6 +140,7 @@ class PlayerNotifier extends StateNotifier<PlayerStateData> {
   @override
   void dispose() {
     _positionSub?.cancel();
+    _seekDebounce?.cancel();
     super.dispose();
   }
 }

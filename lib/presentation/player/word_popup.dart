@@ -109,8 +109,8 @@ class _WordPopupState extends ConsumerState<WordPopup> {
       ),
       child: DraggableScrollableSheet(
         expand: false,
-        initialChildSize: 0.55,
-        minChildSize: 0.3,
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
         maxChildSize: 0.85,
         builder: (_, controller) => Container(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -128,7 +128,7 @@ class _WordPopupState extends ConsumerState<WordPopup> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Word + phonetic
               Row(
