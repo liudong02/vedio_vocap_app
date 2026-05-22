@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/video_repository.dart';
 import '../../data/database/app_database.dart';
+import '../../services/bilibili_service.dart';
 import '../../services/video_import_service.dart';
 import '../widgets/empty_state_view.dart';
 
@@ -211,7 +212,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
 
-    ref.read(videoImportServiceProvider).importFromText(text, stateNotifier).then((_) {
+    ref.read(videoImportServiceProvider).importFromText(
+      text,
+      stateNotifier,
+      onSelectPage: (pages) => _showPageSelector(context, pages),
+    ).then((_) {
       if (context.mounted &&
           stateNotifier.value.step == ImportStep.done) {
         Navigator.of(context, rootNavigator: true).pop();
@@ -219,7 +224,52 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SnackBar(content: Text('视频导入成功')),
         );
       }
+    }).catchError((e) {
+      debugPrint('[Import] Unhandled error: $e');
+      stateNotifier.value = ImportState(ImportStep.error, '导入异常: $e');
     });
+  }
+
+  Future<BilibiliPage?> _showPageSelector(
+      BuildContext context, List<BilibiliPage> pages) async {
+    if (!context.mounted) return null;
+    return showDialog<BilibiliPage>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('选择集数'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: ListView.builder(
+            itemCount: pages.length,
+            itemBuilder: (_, i) {
+              final page = pages[i];
+              final mins = (page.duration / 60).floor();
+              final secs = (page.duration % 60).floor();
+              return ListTile(
+                leading: CircleAvatar(
+                  radius: 14,
+                  child: Text('${page.page}', style: const TextStyle(fontSize: 12)),
+                ),
+                title: Text(
+                  page.partName.isNotEmpty ? page.partName : 'P${page.page}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: Text('$mins:${secs.toString().padLeft(2, '0')}'),
+                onTap: () => Navigator.pop(ctx, page),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -385,7 +435,7 @@ class _ImportProgressDialog extends StatelessWidget {
     return ValueListenableBuilder<ImportState>(
       valueListenable: state,
       builder: (context, importState, _) {
-        final steps = [
+        const steps = [
           _StepInfo('解析链接', ImportStep.extracting),
           _StepInfo('下载视频', ImportStep.downloading),
           _StepInfo('生成字幕', ImportStep.subtitling),
