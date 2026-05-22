@@ -136,7 +136,9 @@ class BilibiliService {
   }
 
   static Future<String?> downloadStream(
-      String streamUrl, String outputPath) async {
+      String streamUrl, String outputPath, {
+      void Function(double progress)? onProgress,
+  }) async {
     try {
       final request = http.Request('GET', Uri.parse(streamUrl));
       request.headers['User-Agent'] = _userAgent;
@@ -151,9 +153,19 @@ class BilibiliService {
         return null;
       }
 
+      final totalBytes = response.contentLength ?? 0;
+      var receivedBytes = 0;
       final file = File(outputPath);
       final sink = file.openWrite();
-      await response.stream.pipe(sink);
+
+      await for (final chunk in response.stream) {
+        sink.add(chunk);
+        receivedBytes += chunk.length;
+        if (totalBytes > 0 && onProgress != null) {
+          onProgress(receivedBytes / totalBytes);
+        }
+      }
+
       await sink.close();
       client.close();
 

@@ -84,22 +84,34 @@ class VideoImportService {
     }
   }
 
-  Future<String?> downloadVideo(String url, String id) async {
+  Future<String?> downloadVideo(String url, String id, {
+    void Function(double)? onProgress,
+  }) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final videoDir = Directory(p.join(dir.path, 'videos'));
       await videoDir.create(recursive: true);
       final outputPath = p.join(videoDir.path, '$id.mp4');
 
-      final result = await Process.run(
+      final process = await Process.start(
         'yt-dlp',
-        ['-f', 'best[height<=720]/best', '-o', outputPath, '--no-part', url],
-        stdoutEncoding: utf8,
-        stderrEncoding: utf8,
+        ['-f', 'best[height<=720]/best', '-o', outputPath, '--no-part', '--newline', url],
       );
 
-      if (result.exitCode != 0) {
-        debugPrint('[Import] yt-dlp download error: ${result.stderr}');
+      final percentRegex = RegExp(r'(\d+\.?\d*)%');
+      process.stdout.transform(utf8.decoder).listen((data) {
+        final match = percentRegex.firstMatch(data);
+        if (match != null) {
+          onProgress?.call(double.parse(match.group(1)!) / 100);
+        }
+      });
+      process.stderr.transform(utf8.decoder).listen((data) {
+        debugPrint('[Import] yt-dlp stderr: $data');
+      });
+
+      final exitCode = await process.exitCode;
+      if (exitCode != 0) {
+        debugPrint('[Import] yt-dlp download exit code: $exitCode');
         return null;
       }
 
@@ -116,13 +128,16 @@ class VideoImportService {
     }
   }
 
-  Future<String?> generateSubtitles(String videoPath, String id) async {
+  Future<String?> generateSubtitles(String videoPath, String id, {
+    void Function(double)? onProgress,
+    double? videoDurationSec,
+  }) async {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final subtitleDir = Directory(p.join(dir.path, 'subtitles'));
       await subtitleDir.create(recursive: true);
 
-      final result = await Process.run(
+      final process = await Process.start(
         'whisper',
         [
           videoPath,
@@ -130,13 +145,30 @@ class VideoImportService {
           '--language', 'en',
           '--output_format', 'srt',
           '--output_dir', subtitleDir.path,
+          '--verbose', 'True',
         ],
-        stdoutEncoding: utf8,
-        stderrEncoding: utf8,
+        environment: {'PYTHONUNBUFFERED': '1'},
       );
 
-      if (result.exitCode != 0) {
-        debugPrint('[Import] whisper error: ${result.stderr}');
+      // Parse "[HH:MM:SS.mmm --> HH:MM:SS.mmm]" to track progress
+      final tsRegex = RegExp(r'-->\s*(\d+):(\d+)\.(\d+)\]');
+      process.stdout.transform(utf8.decoder).listen((data) {
+        if (videoDurationSec != null && videoDurationSec > 0 && onProgress != null) {
+          final match = tsRegex.firstMatch(data);
+          if (match != null) {
+            final mins = int.parse(match.group(1)!);
+            final secs = int.parse(match.group(2)!);
+            final endSec = mins * 60 + secs;
+            final p = (endSec / videoDurationSec).clamp(0.0, 1.0);
+            onProgress(p);
+          }
+        }
+      });
+      process.stderr.transform(utf8.decoder).listen((_) {});
+
+      final exitCode = await process.exitCode;
+      if (exitCode != 0) {
+        debugPrint('[Import] whisper exit code: $exitCode');
         return null;
       }
 
@@ -189,15 +221,26 @@ class VideoImportService {
 
     // Step 2: Download video
     state.value = ImportState(ImportStep.downloading, '下载视频: ${meta.title}');
-    final videoPath = await downloadVideo(url, id);
+    final videoPath = await downloadVideo(url, id, onProgress: (p) {
+      state.value = ImportState(
+        ImportStep.downloading, '下载视频: ${(p * 100).toInt()}%', p,
+      );
+    });
     if (videoPath == null) {
       state.value = const ImportState(ImportStep.error, '视频下载失败');
       return;
     }
 
     // Step 3: Generate subtitles
-    state.value = const ImportState(ImportStep.subtitling, '生成字幕中 (可能需要几分钟)...');
-    final subtitlePath = await generateSubtitles(videoPath, id);
+    state.value = const ImportState(ImportStep.subtitling, '生成字幕中...');
+    final subtitlePath = await generateSubtitles(videoPath, id,
+      videoDurationSec: meta.duration,
+      onProgress: (p) {
+        state.value = ImportState(
+          ImportStep.subtitling, '生成字幕: ${(p * 100).toInt()}%', p,
+        );
+      },
+    );
 
     // Step 4: Import into app
     state.value = const ImportState(ImportStep.importing, '导入中...');
@@ -276,8 +319,14 @@ class VideoImportService {
       final tempPath = p.join(videoDir.path, '$id.flv');
       final mp4Path = p.join(videoDir.path, '$id.mp4');
 
-      final downloadedPath =
-          await BilibiliService.downloadStream(streamUrl, tempPath);
+      final downloadedPath = await BilibiliService.downloadStream(
+        streamUrl, tempPath,
+        onProgress: (p) {
+          state.value = ImportState(
+            ImportStep.downloading, '下载视频: ${(p * 100).toInt()}%', p,
+          );
+        },
+      );
       if (downloadedPath == null) {
         state.value = const ImportState(ImportStep.error, '视频下载失败');
         return;
@@ -292,9 +341,15 @@ class VideoImportService {
       }
 
       // Generate subtitles
-      state.value =
-          const ImportState(ImportStep.subtitling, '生成字幕中 (可能需要几分钟)...');
-      final subtitlePath = await generateSubtitles(videoPath, id);
+      state.value = const ImportState(ImportStep.subtitling, '生成字幕中...');
+      final subtitlePath = await generateSubtitles(videoPath, id,
+        videoDurationSec: selectedPage.duration,
+        onProgress: (p) {
+          state.value = ImportState(
+            ImportStep.subtitling, '生成字幕: ${(p * 100).toInt()}%', p,
+          );
+        },
+      );
 
       // Import
       state.value = const ImportState(ImportStep.importing, '导入中...');

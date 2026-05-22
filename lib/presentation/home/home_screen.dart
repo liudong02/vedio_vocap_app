@@ -458,7 +458,7 @@ class _ImportProgressDialog extends StatelessWidget {
                   ],
                 ),
               ] else ...[
-                for (final step in steps)
+                for (final step in steps) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
@@ -482,6 +482,19 @@ class _ImportProgressDialog extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (_isCurrentStep(step.step, importState.step) &&
+                      importState.progress != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 30, right: 8, top: 2, bottom: 4),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: importState.progress,
+                          minHeight: 6,
+                        ),
+                      ),
+                    ),
+                ],
               ],
             ],
           ),
