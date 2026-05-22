@@ -12,7 +12,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -20,6 +20,11 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await customStatement(
               'ALTER TABLE videos ADD COLUMN subtitle_position_y REAL NOT NULL DEFAULT -1',
+            );
+          }
+          if (from < 3) {
+            await customStatement(
+              'ALTER TABLE videos ADD COLUMN source_url TEXT',
             );
           }
         },

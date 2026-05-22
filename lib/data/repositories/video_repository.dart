@@ -89,6 +89,37 @@ class VideoRepository {
     return _db.getVideo(id);
   }
 
+  Future<VideoEntry?> importVideoFromFile({
+    required String id,
+    required String title,
+    required String filePath,
+    String? subtitlePath,
+    String? sourceUrl,
+  }) async {
+    String? thumbPath;
+    try {
+      thumbPath = await _generateThumbnail(filePath, id);
+    } catch (e) {
+      debugPrint('[VideoRepo] thumbnail error: $e');
+    }
+
+    try {
+      await _db.insertVideo(VideosCompanion.insert(
+        id: id,
+        title: title,
+        filePath: filePath,
+        thumbnailPath: Value(thumbPath),
+        subtitlePath: Value(subtitlePath),
+        sourceUrl: Value(sourceUrl),
+      ));
+    } catch (e) {
+      debugPrint('[VideoRepo] DB insert error: $e');
+      return null;
+    }
+
+    return _db.getVideo(id);
+  }
+
   Future<String?> _findMatchingSubtitle(String videoPath, String videoId) async {
     final videoFile = File(videoPath);
     final dir = videoFile.parent.path;
