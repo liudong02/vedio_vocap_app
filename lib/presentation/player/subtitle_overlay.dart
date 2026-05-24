@@ -40,12 +40,28 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
   Widget _buildSubtitle(BuildContext context, SubtitleCue cue) {
     _disposeRecognizers();
 
+    final fontSize = _subtitleFontSize(context);
+    final plainStyle = TextStyle(
+      fontFamily: 'Inter',
+      color: Colors.white,
+      fontSize: fontSize,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.3,
+      height: 1.35,
+      shadows: _subtitleShadows,
+    );
+    final wordStyle = plainStyle.copyWith(
+      decoration: TextDecoration.underline,
+      decorationColor: const Color(0xAAB794FF),
+      decorationThickness: 1.5,
+    );
+
     final spans = <InlineSpan>[];
     for (final token in cue.words) {
       if (token.isSpace || token.lookup.isEmpty) {
         spans.add(TextSpan(
           text: token.display,
-          style: _plainStyle,
+          style: plainStyle,
         ));
       } else {
         final recognizer = TapGestureRecognizer()
@@ -54,7 +70,7 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
 
         spans.add(TextSpan(
           text: token.display,
-          style: _wordStyle,
+          style: wordStyle,
           recognizer: recognizer,
         ));
       }
@@ -63,7 +79,7 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
     return Container(
       width: double.infinity,
       color: Colors.black,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: RichText(
         textAlign: TextAlign.center,
         text: TextSpan(children: spans),
@@ -90,20 +106,18 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
     });
   }
 
-  static const _plainStyle = TextStyle(
-    color: Colors.white,
-    fontSize: 18,
-    height: 1.4,
-    shadows: [Shadow(blurRadius: 2, color: Colors.black)],
-  );
+  static double _subtitleFontSize(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    if (w < 600) return 16;
+    if (w < 1024) return 20;
+    return 24;
+  }
 
-  static const _wordStyle = TextStyle(
-    color: Colors.white,
-    fontSize: 18,
-    height: 1.4,
-    decoration: TextDecoration.underline,
-    decorationColor: Color(0xAAB794FF),
-    decorationThickness: 1.5,
-    shadows: [Shadow(blurRadius: 2, color: Colors.black)],
-  );
+  static const _subtitleShadows = [
+    Shadow(offset: Offset(-1.5, -1.5), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(1.5, -1.5), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(-1.5, 1.5), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(1.5, 1.5), blurRadius: 1, color: Colors.black),
+    Shadow(blurRadius: 4, color: Color(0xDD000000)),
+  ];
 }
