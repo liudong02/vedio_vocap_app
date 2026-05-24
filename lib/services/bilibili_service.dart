@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 class BilibiliVideoInfo {
@@ -179,8 +180,36 @@ class BilibiliService {
     }
   }
 
-  /// Convert FLV to MP4 using ffmpeg (Bilibili streams are often FLV)
+  static bool get _isMobile => Platform.isAndroid || Platform.isIOS;
+
   static Future<String?> convertToMp4(
+      String inputPath, String outputPath) async {
+    if (_isMobile) {
+      return _convertToMp4Mobile(inputPath, outputPath);
+    }
+    return _convertToMp4Desktop(inputPath, outputPath);
+  }
+
+  static const _audioChannel = MethodChannel('video_vocab/audio');
+
+  static Future<String?> _convertToMp4Mobile(
+      String inputPath, String outputPath) async {
+    try {
+      await _audioChannel.invokeMethod('convertToMp4', {
+        'input': inputPath,
+        'output': outputPath,
+      });
+      if (await File(outputPath).exists()) {
+        return outputPath;
+      }
+      return inputPath;
+    } catch (e) {
+      debugPrint('[Bilibili] platform convert error: $e');
+      return inputPath;
+    }
+  }
+
+  static Future<String?> _convertToMp4Desktop(
       String inputPath, String outputPath) async {
     try {
       final result = await Process.run('ffmpeg', [

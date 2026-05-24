@@ -61,19 +61,12 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      child: Center(
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.black.withAlpha(127),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(children: spans),
-          ),
-        ),
+      width: double.infinity,
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(children: spans),
       ),
     );
   }

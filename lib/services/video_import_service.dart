@@ -8,19 +8,25 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../data/repositories/video_repository.dart';
 import 'bilibili_service.dart';
+import 'toutiao_service.dart';
+import 'whisper_service.dart';
 
 final videoImportServiceProvider = Provider<VideoImportService>((ref) {
-  return VideoImportService(ref.watch(videoRepositoryProvider));
+  return VideoImportService(
+    ref.watch(videoRepositoryProvider),
+    ref.watch(whisperServiceProvider),
+  );
 });
 
-enum ImportStep { extracting, downloading, subtitling, importing, done, error }
+enum ImportStep { extracting, modelDownloading, downloading, subtitling, importing, done, error }
 
 class ImportState {
   final ImportStep step;
   final String message;
   final double? progress;
+  final bool needsModelDownload;
 
-  const ImportState(this.step, this.message, [this.progress]);
+  const ImportState(this.step, this.message, [this.progress, this.needsModelDownload = false]);
 }
 
 class VideoMeta {
@@ -32,10 +38,12 @@ class VideoMeta {
 
 class VideoImportService {
   final VideoRepository _repo;
+  final WhisperService _whisper;
   static const _uuid = Uuid();
 
-  VideoImportService(this._repo);
+  VideoImportService(this._repo, this._whisper);
 
+  static bool get _isMobile => Platform.isAndroid || Platform.isIOS;
   static bool get isDesktop =>
       Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
@@ -45,7 +53,7 @@ class VideoImportService {
   }
 
   Future<String> resolveUrl(String url) async {
-    final shortDomains = ['b23.tv', 'm.toutiao.com/is'];
+    final shortDomains = ['b23.tv', 'm.toutiao.com/is', 'v.douyin.com'];
     final isShort = shortDomains.any((d) => url.contains(d));
     if (!isShort) return url;
 
@@ -129,6 +137,18 @@ class VideoImportService {
   }
 
   Future<String?> generateSubtitles(String videoPath, String id, {
+    void Function(String message, double? progress)? onStatus,
+    void Function(double)? onProgress,
+    double? videoDurationSec,
+  }) async {
+    if (_isMobile) {
+      return _whisper.transcribe(videoPath, id, onStatus: onStatus);
+    }
+    return _generateSubtitlesDesktop(videoPath, id,
+        onProgress: onProgress, videoDurationSec: videoDurationSec);
+  }
+
+  Future<String?> _generateSubtitlesDesktop(String videoPath, String id, {
     void Function(double)? onProgress,
     double? videoDurationSec,
   }) async {
@@ -150,7 +170,6 @@ class VideoImportService {
         environment: {'PYTHONUNBUFFERED': '1'},
       );
 
-      // Parse "[HH:MM:SS.mmm --> HH:MM:SS.mmm]" to track progress
       final tsRegex = RegExp(r'-->\s*(\d+):(\d+)\.(\d+)\]');
       process.stdout.transform(utf8.decoder).listen((data) {
         if (videoDurationSec != null && videoDurationSec > 0 && onProgress != null) {
@@ -204,19 +223,42 @@ class VideoImportService {
     final url = await resolveUrl(rawUrl);
     debugPrint('[Import] resolved URL: $url');
 
+    // Check model status for mobile (needed for subtitle generation)
+    bool needsModelDownload = false;
+    if (_isMobile) {
+      needsModelDownload = !(await _whisper.isModelDownloaded());
+    }
+
     // Check if it's a Bilibili URL
     if (BilibiliService.isBilibiliUrl(url)) {
-      await _importFromBilibili(url, state, onSelectPage: onSelectPage);
+      await _importFromBilibili(url, state,
+          onSelectPage: onSelectPage, needsModelDownload: needsModelDownload);
+      return;
+    }
+
+    // Check if it's a Toutiao/Douyin URL
+    if (ToutiaoService.isToutiaoUrl(url)) {
+      await _importFromToutiao(url, state, needsModelDownload: needsModelDownload);
+      return;
+    }
+
+    // Non-platform URLs: desktop only (requires yt-dlp)
+    if (_isMobile) {
+      state.value = const ImportState(ImportStep.error, '暂不支持该平台链接，请使用B站或头条链接');
       return;
     }
 
     final id = _uuid.v4();
 
-    // Non-Bilibili: use yt-dlp
     final meta = await fetchVideoInfo(url);
     if (meta == null) {
       state.value = const ImportState(ImportStep.error, '无法解析视频信息，请检查链接');
       return;
+    }
+
+    // Download model if needed
+    if (needsModelDownload) {
+      await _downloadModelStep(state);
     }
 
     // Step 2: Download video
@@ -235,6 +277,9 @@ class VideoImportService {
     state.value = const ImportState(ImportStep.subtitling, '生成字幕中...');
     final subtitlePath = await generateSubtitles(videoPath, id,
       videoDurationSec: meta.duration,
+      onStatus: (message, progress) {
+        state.value = ImportState(ImportStep.subtitling, message, progress);
+      },
       onProgress: (p) {
         state.value = ImportState(
           ImportStep.subtitling, '生成字幕: ${(p * 100).toInt()}%', p,
@@ -255,13 +300,102 @@ class VideoImportService {
     state.value = const ImportState(ImportStep.done, '导入完成');
   }
 
+  Future<void> _downloadModelStep(ValueNotifier<ImportState> state) async {
+    state.value = const ImportState(ImportStep.modelDownloading, '首次使用，下载字幕模型...', 0.0, true);
+    try {
+      await _whisper.downloadModel(onProgress: (p) {
+        state.value = ImportState(
+          ImportStep.modelDownloading, '下载字幕模型: ${(p * 100).toInt()}%', p, true,
+        );
+      });
+    } catch (e) {
+      state.value = ImportState(ImportStep.error, '模型下载失败: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _importFromToutiao(
+    String url,
+    ValueNotifier<ImportState> state, {
+    bool needsModelDownload = false,
+  }) async {
+    try {
+      state.value = const ImportState(ImportStep.extracting, '解析头条视频...');
+
+      final info = await ToutiaoService.fetchVideoInfo(url);
+      if (info == null) {
+        state.value = const ImportState(ImportStep.error, '无法解析头条视频，请检查链接');
+        return;
+      }
+
+      final id = _uuid.v4();
+
+      // Download model if needed
+      if (needsModelDownload) {
+        await _downloadModelStep(state);
+      }
+
+      // Download video
+      state.value = ImportState(ImportStep.downloading, '下载视频: ${info.title}');
+      final dir = await getApplicationDocumentsDirectory();
+      final videoDir = Directory(p.join(dir.path, 'videos'));
+      await videoDir.create(recursive: true);
+      final outputPath = p.join(videoDir.path, '$id.mp4');
+
+      final videoPath = await ToutiaoService.downloadVideo(
+        info.videoUrl,
+        outputPath,
+        onProgress: (p) {
+          state.value = ImportState(
+            ImportStep.downloading, '下载视频: ${(p * 100).toInt()}%', p,
+          );
+        },
+      );
+      if (videoPath == null) {
+        state.value = const ImportState(ImportStep.error, '视频下载失败');
+        return;
+      }
+
+      // Generate subtitles
+      state.value = const ImportState(ImportStep.subtitling, '生成字幕中...');
+      final subtitlePath = await generateSubtitles(videoPath, id,
+        videoDurationSec: info.duration,
+        onStatus: (message, progress) {
+          state.value = ImportState(ImportStep.subtitling, message, progress);
+        },
+        onProgress: (p) {
+          state.value = ImportState(
+            ImportStep.subtitling, '生成字幕: ${(p * 100).toInt()}%', p,
+          );
+        },
+      );
+
+      // Import
+      state.value = const ImportState(ImportStep.importing, '导入中...');
+      await _repo.importVideoFromFile(
+        id: id,
+        title: info.title,
+        filePath: videoPath,
+        subtitlePath: subtitlePath,
+        sourceUrl: url,
+      );
+
+      state.value = const ImportState(ImportStep.done, '导入完成');
+    } catch (e) {
+      debugPrint('[Import] Toutiao import error: $e');
+      if (e is! Exception || !state.value.message.contains('模型下载')) {
+        state.value = ImportState(ImportStep.error, '头条导入异常: $e');
+      }
+    }
+  }
+
   Future<void> _importFromBilibili(
     String url,
     ValueNotifier<ImportState> state, {
     Future<BilibiliPage?> Function(List<BilibiliPage> pages)? onSelectPage,
+    bool needsModelDownload = false,
   }) async {
     try {
-      // Resolve b23.tv short links
       final resolvedUrl = await BilibiliService.resolveShortUrl(url);
       final bvid = BilibiliService.extractBvid(resolvedUrl);
       if (bvid == null) {
@@ -271,7 +405,6 @@ class VideoImportService {
 
       debugPrint('[Import] Bilibili BVID: $bvid');
 
-      // Fetch video info
       final info = await BilibiliService.fetchVideoInfo(bvid);
       if (info == null) {
         state.value = const ImportState(ImportStep.error, '无法获取B站视频信息');
@@ -280,7 +413,6 @@ class VideoImportService {
 
       debugPrint('[Import] Bilibili title: ${info.title}, pages: ${info.pages.length}');
 
-      // Handle multi-page videos
       BilibiliPage selectedPage;
       if (info.pages.length > 1 && onSelectPage != null) {
         state.value = ImportState(
@@ -301,6 +433,11 @@ class VideoImportService {
       final title = info.pages.length > 1
           ? '${info.title} - P${selectedPage.page} ${selectedPage.partName}'
           : info.title;
+
+      // Download model if needed
+      if (needsModelDownload) {
+        await _downloadModelStep(state);
+      }
 
       // Get stream URL
       state.value = ImportState(ImportStep.downloading, '获取视频流: $title');
@@ -344,6 +481,9 @@ class VideoImportService {
       state.value = const ImportState(ImportStep.subtitling, '生成字幕中...');
       final subtitlePath = await generateSubtitles(videoPath, id,
         videoDurationSec: selectedPage.duration,
+        onStatus: (message, progress) {
+          state.value = ImportState(ImportStep.subtitling, message, progress);
+        },
         onProgress: (p) {
           state.value = ImportState(
             ImportStep.subtitling, '生成字幕: ${(p * 100).toInt()}%', p,
@@ -365,7 +505,9 @@ class VideoImportService {
       state.value = const ImportState(ImportStep.done, '导入完成');
     } catch (e) {
       debugPrint('[Import] Bilibili import error: $e');
-      state.value = ImportState(ImportStep.error, 'B站导入异常: $e');
+      if (e is! Exception || !state.value.message.contains('模型下载')) {
+        state.value = ImportState(ImportStep.error, 'B站导入异常: $e');
+      }
     }
   }
 }

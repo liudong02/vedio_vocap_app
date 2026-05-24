@@ -53,3 +53,7 @@ app.*.map.json
 
 # Android build cache
 /android/build/
+
+# Android signing
+/android/key.properties
+*.jks

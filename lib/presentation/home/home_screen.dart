@@ -120,16 +120,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _importLocalVideo(context);
                 },
               ),
-              if (VideoImportService.isDesktop)
-                ListTile(
-                  leading: const Icon(Icons.link_rounded),
-                  title: const Text('粘贴链接'),
-                  subtitle: const Text('支持头条、B站等平台'),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _showPasteLinkDialog(context);
-                  },
-                ),
+              ListTile(
+                leading: const Icon(Icons.link_rounded),
+                title: const Text('粘贴链接'),
+                subtitle: const Text('支持头条、B站等平台'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showPasteLinkDialog(context);
+                },
+              ),
             ],
           ),
         ),
@@ -430,17 +429,27 @@ class _ImportProgressDialog extends StatelessWidget {
 
   const _ImportProgressDialog({required this.state, required this.onCancel});
 
+  List<_StepInfo> _buildSteps(ImportState importState) {
+    final steps = <_StepInfo>[
+      const _StepInfo('解析链接', ImportStep.extracting),
+    ];
+    if (importState.needsModelDownload) {
+      steps.add(const _StepInfo('下载字幕模型', ImportStep.modelDownloading));
+    }
+    steps.addAll(const [
+      _StepInfo('下载视频', ImportStep.downloading),
+      _StepInfo('生成字幕', ImportStep.subtitling),
+      _StepInfo('导入完成', ImportStep.importing),
+    ]);
+    return steps;
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ImportState>(
       valueListenable: state,
       builder: (context, importState, _) {
-        const steps = [
-          _StepInfo('解析链接', ImportStep.extracting),
-          _StepInfo('下载视频', ImportStep.downloading),
-          _StepInfo('生成字幕', ImportStep.subtitling),
-          _StepInfo('导入完成', ImportStep.importing),
-        ];
+        final steps = _buildSteps(importState);
 
         return AlertDialog(
           title: const Text('导入视频'),
@@ -483,7 +492,7 @@ class _ImportProgressDialog extends StatelessWidget {
                     ),
                   ),
                   if (_isCurrentStep(step.step, importState.step) &&
-                      importState.progress != null)
+                      step.step != ImportStep.extracting)
                     Padding(
                       padding: const EdgeInsets.only(left: 30, right: 8, top: 2, bottom: 4),
                       child: ClipRRect(

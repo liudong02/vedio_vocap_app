@@ -28,6 +28,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   @override
   void dispose() {
+    ref.read(playerNotifierProvider.notifier).pause();
     _videoController = null;
     super.dispose();
   }
