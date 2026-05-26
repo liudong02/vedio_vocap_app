@@ -1,31 +1,72 @@
 # Video Vocab - 看视频学英语
 
-一款通过看英语视频来学习词汇的 App。点击字幕中的单词即可查词、保存，并通过间隔重复进行复习。
+> 把任何英语视频变成你的单词课堂
 
-## 功能特性
+还在用枯燥的单词表背单词？**Video Vocab** 让你在看喜欢的英语视频时自然积累词汇——遇到不认识的单词，点一下就能查词、保存，系统会根据记忆曲线帮你安排复习。
 
-- **视频播放** — 导入本地视频或通过链接下载（支持 B站、头条/抖音/西瓜视频）
-- **智能字幕** — 自动生成英语字幕（基于 Whisper 语音识别），支持导入 SRT/VTT 字幕文件
-- **点词查询** — 点击字幕中任意单词，即时查看释义和音标
-- **生词本** — 保存单词时自动记录视频上下文、时间戳和截图
-- **间隔复习** — 基于 SM-2 算法的间隔重复系统，科学记忆
-- **字幕定位** — 可拖拽字幕条覆盖视频原始字幕
-- **应用升级** — 检测新版本并引导下载更新
+## 它能做什么？
 
-## 支持平台
+### 1. 导入你喜欢的英语视频
 
-| 平台 | 状态 |
+粘贴 B站、头条、抖音的分享链接，自动下载视频并生成英文字幕。也可以直接导入本地视频文件。
+
+<!-- ![导入视频](docs/screenshots/import.png) -->
+
+### 2. 看视频，点字幕学单词
+
+视频播放时，底部显示英文字幕。看到不认识的单词？直接点击它，立刻弹出释义和音标，一秒查词。
+
+<!-- ![点词查询](docs/screenshots/tap-word.png) -->
+
+### 3. 一键保存到生词本
+
+查到的单词可以一键保存。系统自动帮你记录视频上下文、出现的时间点和画面截图，方便日后回忆。
+
+<!-- ![生词本](docs/screenshots/word-card.png) -->
+
+### 4. 科学复习，记住每个单词
+
+基于间隔重复算法（SM-2），系统每天推送该复习的单词。记得牢的少复习，记不住的多复习，高效不浪费时间。
+
+<!-- ![复习](docs/screenshots/review.png) -->
+
+## 核心亮点
+
+| 功能 | 说明 |
 |------|------|
-| Android | ✅ APK 可用 |
-| iOS | ✅ 需 Xcode 签名 |
-| macOS | ✅ |
-| Linux | ✅ |
+| 智能字幕生成 | 基于 Whisper AI 语音识别，无需手动找字幕 |
+| 点词即查 | 点击字幕任意单词，即时显示释义 |
+| 上下文记忆 | 保存单词时自动关联视频场景，记忆更深 |
+| 间隔复习 | SM-2 算法科学安排复习时间 |
+| 多平台支持 | Android / iOS / macOS 均可使用 |
+| 字幕可拖动 | 拖动字幕条遮挡视频原始字幕 |
+| 支持多来源 | B站、头条、抖音、西瓜视频、本地文件 |
 
-## 截图
+## 下载安装
 
-> 待补充
+| 平台 | 下载 |
+|------|------|
+| Android | [APK 下载](https://example.com) |
+| iOS | 开发中 |
+| macOS | [App 下载](https://example.com) |
 
-## 快速开始
+> 下载链接待更新
+
+## 使用流程
+
+```
+粘贴视频链接 → 自动下载+生成字幕 → 看视频点单词 → 保存到生词本 → 每日复习
+```
+
+## 反馈与联系
+
+有建议或问题？打开 App → 设置 → 反馈与建议，扫码加微信联系我。
+
+---
+
+## 开发者信息
+
+以下内容面向开发者。
 
 ### 环境要求
 
@@ -37,101 +78,49 @@
 ### 安装与运行
 
 ```bash
-# 克隆仓库
 git clone <repo-url>
 cd vedio_vocap_app
 
-# 安装依赖
 flutter pub get
+dart run build_runner build   # 生成数据库代码
 
-# 生成数据库代码（修改 tables.dart 后需重新执行）
-dart run build_runner build
-
-# 运行
-flutter run -d macos      # macOS
-flutter run -d chrome     # Web
-flutter run               # 连接的设备
+flutter run -d macos          # macOS
+flutter run                   # 连接的设备
 ```
 
 ### 打包发布
 
 ```bash
-# Android APK
-flutter build apk --release
-
-# macOS App
-flutter build macos --release
-
-# iOS（需在 Xcode 中配置签名）
-flutter build ios --release
+flutter build apk --release       # Android APK
+flutter build macos --release     # macOS App
+flutter build ios --release       # iOS（需 Xcode 签名）
 ```
 
-## 技术架构
+### 技术架构
 
 ```
 lib/
-├── core/              # 框架层：路由、主题、工具函数
-│   ├── router/        # GoRouter 路由配置 + 底部导航
-│   ├── theme/         # 颜色、主题定义
-│   └── utils/         # SM-2 算法、SRT 解析器
-├── data/              # 数据层：数据库、模型、仓储
-│   ├── database/      # Drift SQLite ORM + 代码生成
-│   ├── models/        # SubtitleCue, WordDefinition
-│   └── repositories/  # VideoRepository, WordRepository
-├── services/          # 业务逻辑层
-│   ├── player_service.dart       # 播放器状态管理
-│   ├── dictionary_service.dart   # 词典查询（Free Dictionary API）
-│   ├── bilibili_service.dart     # B站视频解析下载
-│   ├── toutiao_service.dart      # 头条/抖音视频解析
-│   ├── whisper_service.dart      # 语音识别生成字幕
-│   ├── video_import_service.dart # 导入流程编排
-│   └── upgrade_service.dart      # 应用更新检测
-└── presentation/      # UI 层
-    ├── home/          # 视频库首页
-    ├── player/        # 视频播放器 + 字幕覆盖层
-    ├── library/       # 生词本
-    ├── review/        # 间隔复习
-    ├── settings/      # 设置页面
-    └── widgets/       # 共享组件
+├── core/              # 路由、主题、工具（SM-2、SRT 解析）
+├── data/              # Drift 数据库、模型、仓储
+├── services/          # 播放器、词典、B站/头条解析、Whisper、升级
+└── presentation/      # UI（首页、播放器、生词本、复习、设置）
 ```
 
 ### 技术栈
 
-| 类别 | 技术方案 |
-|------|---------|
+| 类别 | 方案 |
+|------|------|
 | 状态管理 | Riverpod |
 | 路由 | GoRouter |
 | 视频播放 | media_kit |
 | 数据库 | Drift (SQLite) |
 | 语音识别 | whisper_flutter_new (移动端) / whisper CLI (桌面端) |
-| 字体 | Inter SemiBold（跨平台一致性） |
+| 字体 | Inter SemiBold |
 
-### 数据流
+### 开发备注
 
-1. 用户导入视频 → 保存元数据到 SQLite，生成缩略图
-2. 打开视频 → media_kit 加载播放，解析 SRT 字幕为 `SubtitleCue` 列表
-3. 点击字幕单词 → 查询 Free Dictionary API（本地缓存优先），弹出释义
-4. 保存单词 → 创建 WordCard（含释义、上下文、截图、SM-2 初始参数）
-5. 复习单词 → 获取到期卡片，用户评分后 SM-2 算法更新复习间隔
-
-## 视频导入方式
-
-| 来源 | 方式 | 平台 |
-|------|------|------|
-| B站 | 粘贴分享链接，API 解析 | 全平台 |
-| 头条/抖音/西瓜 | 粘贴分享链接，页面解析 | 全平台 |
-| 其他平台 | yt-dlp 下载 | 仅桌面端 |
-| 本地文件 | 文件选择器 | 全平台 |
-
-## 字幕生成
-
-- **移动端**：使用 whisper.cpp（通过 whisper_flutter_new），首次使用自动下载 tiny 模型（~75MB）
-- **桌面端**：调用系统安装的 `whisper` 命令行工具
-
-## 开发说明
-
-- 修改数据库表结构后执行 `dart run build_runner build` 重新生成代码
-- 修改 schema 需在 `app_database.dart` 中递增 `schemaVersion` 并添加迁移逻辑
+- 修改数据库表后执行 `dart run build_runner build`
+- 需递增 `schemaVersion` 并添加迁移逻辑
 - UI 语言为简体中文
 
 ## License
