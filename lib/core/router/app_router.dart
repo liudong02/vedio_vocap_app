@@ -5,6 +5,7 @@ import '../../presentation/home/home_screen.dart';
 import '../../presentation/player/player_screen.dart';
 import '../../presentation/library/library_screen.dart';
 import '../../presentation/review/review_screen.dart';
+import '../../presentation/settings/settings_screen.dart';
 import '../theme/app_colors.dart';
 import '../../presentation/widgets/gradient_icon.dart';
 
@@ -26,6 +27,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/review',
             builder: (context, state) => const ReviewScreen(),
+          ),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) => const SettingsScreen(),
           ),
         ],
       ),
@@ -49,6 +54,7 @@ class MainScaffold extends ConsumerWidget {
     final currentIndex = switch (location) {
       '/library' => 1,
       '/review' => 2,
+      '/settings' => 3,
       _ => 0,
     };
 
@@ -64,6 +70,8 @@ class MainScaffold extends ConsumerWidget {
               context.go('/library');
             case 2:
               context.go('/review');
+            case 3:
+              context.go('/settings');
           }
         },
       ),
@@ -115,6 +123,13 @@ class _AppBottomNavBar extends StatelessWidget {
                 label: '复习',
                 isActive: currentIndex == 2,
                 onTap: () => onTap(2),
+              ),
+              _NavItem(
+                icon: Icons.settings_outlined,
+                activeIcon: Icons.settings,
+                label: '设置',
+                isActive: currentIndex == 3,
+                onTap: () => onTap(3),
               ),
             ],
           ),

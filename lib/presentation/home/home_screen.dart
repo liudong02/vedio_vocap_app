@@ -112,21 +112,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.folder_open_rounded),
-                title: const Text('本地导入'),
-                subtitle: const Text('从设备中选择视频文件'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _importLocalVideo(context);
-                },
-              ),
-              ListTile(
                 leading: const Icon(Icons.link_rounded),
                 title: const Text('粘贴链接'),
                 subtitle: const Text('支持头条、B站等平台'),
                 onTap: () {
                   Navigator.pop(ctx);
                   _showPasteLinkDialog(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.folder_open_rounded),
+                title: const Text('本地导入'),
+                subtitle: const Text('从设备中选择视频文件'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _importLocalVideo(context);
                 },
               ),
             ],
