@@ -10,25 +10,27 @@
 
 粘贴 B站、头条、抖音的分享链接，自动下载视频并生成英文字幕。也可以直接导入本地视频文件。
 
-<!-- ![导入视频](docs/screenshots/import.png) -->
+![导入视频](docs/screenshots/import.png)
 
 ### 2. 看视频，点字幕学单词
 
 视频播放时，底部显示英文字幕。看到不认识的单词？直接点击它，立刻弹出释义和音标，一秒查词。
 
-<!-- ![点词查询](docs/screenshots/tap-word.png) -->
+![点词查询](docs/screenshots/tap-word.png)
 
 ### 3. 一键保存到生词本
 
 查到的单词可以一键保存。系统自动帮你记录视频上下文、出现的时间点和画面截图，方便日后回忆。
 
-<!-- ![生词本](docs/screenshots/word-card.png) -->
+![查词保存](docs/screenshots/word-card.png)
+
+![生词本](docs/screenshots/wordbook.png)
 
 ### 4. 科学复习，记住每个单词
 
 基于间隔重复算法（SM-2），系统每天推送该复习的单词。记得牢的少复习，记不住的多复习，高效不浪费时间。
 
-<!-- ![复习](docs/screenshots/review.png) -->
+![复习](docs/screenshots/review.png)
 
 ## 核心亮点
 
