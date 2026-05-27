@@ -32,7 +32,32 @@ jobs:
           name: android-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-build-macos:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter build ios --release --no-codesign
+
+      - name: Package iOS app
+        run: |
+          cd build/ios/iphoneos
+          zip -r -y VideoVocab-iOS.zip Runner.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-app
+          path: build/ios/iphoneos/VideoVocab-iOS.zip
+
+  build-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,18 +82,10 @@ build-macos:
           name: macos-app
           path: build/macos/Build/Products/Release/VideoVocab-macOS.zip
 
-  build-linux:
-    runs-on: ubuntu-latest
+  build-windows:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            clang cmake ninja-build pkg-config \
-            libgtk-3-dev liblzma-dev libstdc++-12-dev \
-            libmpv-dev mpv
 
       - uses: subosito/flutter-action@v2
         with:
@@ -78,20 +95,19 @@ build-macos:
 
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
-      - run: flutter build linux --release
+      - run: flutter build windows --release
 
-      - name: Package Linux build
-        run: |
-          cd build/linux/x64/release
-          tar -czf VideoVocab-linux-x64.tar.gz bundle/
+      - name: Package Windows build
+        shell: pwsh
+        run: Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "VideoVocab-Windows.zip"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-bundle
-          path: build/linux/x64/release/VideoVocab-linux-x64.tar.gz
+          name: windows-exe
+          path: VideoVocab-Windows.zip
 
   release:
-    needs: [build-android, build-macos, build-linux]
+    needs: [build-android, build-ios, build-macos, build-windows]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
@@ -105,8 +121,9 @@ build-macos:
         run: |
           mkdir release
           cp artifacts/android-apk/app-release.apk release/VideoVocab-android.apk
+          cp artifacts/ios-app/VideoVocab-iOS.zip release/
           cp artifacts/macos-app/VideoVocab-macOS.zip release/
-          cp artifacts/linux-bundle/VideoVocab-linux-x64.tar.gz release/
+          cp artifacts/windows-exe/VideoVocab-Windows.zip release/
 
       - uses: softprops/action-gh-release@v2
         with:
