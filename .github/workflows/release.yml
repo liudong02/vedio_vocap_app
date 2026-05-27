@@ -45,6 +45,13 @@ jobs:
 
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Disable code signing
+        run: |
+          sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development"/CODE_SIGN_IDENTITY = ""/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_IDENTITY = "iPhone Developer"/CODE_SIGN_IDENTITY = ""/g' ios/Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/DEVELOPMENT_TEAM = [^;]*;/DEVELOPMENT_TEAM = "";/g' ios/Runner.xcodeproj/project.pbxproj
+
       - run: flutter build ios --release --no-codesign
 
       - name: Package iOS app
