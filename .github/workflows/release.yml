@@ -23,8 +23,10 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Accept Android licenses
-        run: yes | sdkmanager --licenses
+      - name: Accept Android licenses and install NDK
+        run: |
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "ndk;27.0.11902837"
 
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
