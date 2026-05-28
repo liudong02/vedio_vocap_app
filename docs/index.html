@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Vocab - 看视频学英语</title>
+  <meta name="description" content="把任何英语视频变成你的单词课堂。看视频点字幕学单词，科学复习，轻松记忆。">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #4F6EF7;
+      --primary-light: #6B85FF;
+      --bg: #F7F8FC;
+      --text: #1A1D2E;
+      --text-secondary: #6B7280;
+      --card-bg: #FFFFFF;
+      --radius: 16px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #4F6EF7 0%, #7B5BF2 50%, #A855F7 100%);
+      color: white;
+      text-align: center;
+      padding: 80px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.08) 0%, transparent 60%);
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .hero .tagline {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      margin-bottom: 36px;
+      position: relative;
+    }
+
+    .hero .desc {
+      font-size: 1rem;
+      opacity: 0.8;
+      max-width: 520px;
+      margin: 0 auto 40px;
+      position: relative;
+    }
+
+    /* Download buttons */
+    .download-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      position: relative;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+
+    .btn-primary { background: white; color: var(--primary); }
+    .btn-outline { background: rgba(255,255,255,0.15); color: white; border: 1.5px solid rgba(255,255,255,0.4); }
+
+    .btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+    /* Container */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Section */
+    .section {
+      padding: 72px 0;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 48px;
+      font-size: 1.05rem;
+    }
+
+    /* Features */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.08); }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
+    .feature-card p { color: var(--text-secondary); font-size: 0.92rem; }
+
+    /* Steps */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 32px;
+      counter-reset: step;
+    }
+
+    .step {
+      text-align: center;
+      position: relative;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+
+    .step h3 { font-size: 1rem; margin-bottom: 6px; }
+    .step p { color: var(--text-secondary); font-size: 0.88rem; }
+
+    /* Screenshots */
+    .screenshots {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .screenshot-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      transition: transform 0.2s;
+    }
+
+    .screenshot-card:hover { transform: translateY(-4px); }
+
+    .screenshot-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .screenshot-card .caption {
+      padding: 16px 20px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    /* CTA */
+    .cta {
+      background: linear-gradient(135deg, #4F6EF7 0%, #7B5BF2 50%, #A855F7 100%);
+      color: white;
+      text-align: center;
+      padding: 64px 24px;
+    }
+
+    .cta h2 { font-size: 1.8rem; margin-bottom: 12px; }
+    .cta p { opacity: 0.9; margin-bottom: 32px; font-size: 1.05rem; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    footer a { color: var(--primary); text-decoration: none; }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+      .hero { padding: 56px 20px 44px; }
+      .hero h1 { font-size: 2rem; }
+      .hero .tagline { font-size: 1.05rem; }
+      .section { padding: 48px 0; }
+      .section-title { font-size: 1.4rem; }
+      .download-group { flex-direction: column; align-items: center; }
+      .btn { width: 220px; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>Video Vocab</h1>
+    <p class="tagline">看视频学英语，轻松记单词</p>
+    <p class="desc">把任何英语视频变成你的单词课堂——遇到不认识的单词，点一下就能查词、保存，系统会根据记忆曲线帮你安排复习。</p>
+    <div class="download-group">
+      <a class="btn btn-primary" href="https://github.com/liudong02/vedio_vocap_app/releases/latest/download/VideoVocab-macOS.zip">
+        <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        macOS 下载
+      </a>
+      <a class="btn btn-outline" href="https://github.com/liudong02/vedio_vocap_app/releases/latest/download/VideoVocab-Windows.zip">
+        <svg viewBox="0 0 24 24"><path d="M3 12V6.75l8-1.25V12H3zm0 .5h8v6.5l-8-1.25V12.5zM11.5 5.38l9.5-1.63V12h-9.5V5.38zM11.5 12.5H21v7.75l-9.5-1.63V12.5z"/></svg>
+        Windows 下载
+      </a>
+      <a class="btn btn-outline" href="https://github.com/liudong02/vedio_vocap_app/releases/latest/download/VideoVocab-android.apk">
+        <svg viewBox="0 0 24 24"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V7H6v11zM3.5 7C2.67 7 2 7.67 2 8.5v7c0 .83.67 1.5 1.5 1.5S5 16.33 5 15.5v-7C5 7.67 4.33 7 3.5 7zm17 0c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5zm-4.97-5.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85.55 12.95.25 12 .25s-1.85.3-2.64.88L7.88.65c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C7.6 3.55 7 4.68 7 6h10c0-1.32-.6-2.45-1.47-3.34zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/></svg>
+        Android 下载
+      </a>
+      <a class="btn btn-outline" href="https://github.com/liudong02/vedio_vocap_app/releases/latest/download/VideoVocab-iOS.zip">
+        <svg viewBox="0 0 24 24"><path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z"/></svg>
+        iOS 下载
+      </a>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">简单四步，开始学习</h2>
+      <p class="section-subtitle">告别枯燥单词表，在视频中自然积累词汇</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>导入视频</h3>
+          <p>粘贴 B站、抖音、头条链接，或导入本地视频文件</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>AI 生成字幕</h3>
+          <p>基于 Whisper 语音识别，自动生成精准英文字幕</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>点词即查</h3>
+          <p>点击字幕中的任意单词，立刻弹出释义和音标</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>科学复习</h3>
+          <p>SM-2 间隔重复算法，智能安排每日复习计划</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" style="background: white;">
+    <div class="container">
+      <h2 class="section-title">核心功能</h2>
+      <p class="section-subtitle">为英语学习者精心打造的每一个细节</p>
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon" style="background: #EEF2FF;">🎬</div>
+          <h3>多来源视频导入</h3>
+          <p>支持 B站、抖音、头条、西瓜视频链接导入，也可导入本地 MP4 文件。用你喜欢的内容学英语。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: #FEF3C7;">🤖</div>
+          <h3>AI 字幕生成</h3>
+          <p>基于 Whisper 语音识别引擎，自动为视频生成英文字幕，无需手动找字幕文件。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: #ECFDF5;">📖</div>
+          <h3>点词查义</h3>
+          <p>视频播放时点击字幕中的单词，即时显示音标和详细释义，学习不中断。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: #FDF2F8;">📸</div>
+          <h3>上下文记忆</h3>
+          <p>保存单词时自动截图视频画面，关联出现时间和语境，回忆更深刻。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: #F0F9FF;">🧠</div>
+          <h3>间隔重复复习</h3>
+          <p>基于 SM-2 算法科学安排复习间隔，记得牢的少复习，记不住的多复习。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: #F5F3FF;">📱</div>
+          <h3>多平台支持</h3>
+          <p>Android、iOS、macOS、Windows 全平台覆盖，随时随地学习。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">应用截图</h2>
+      <p class="section-subtitle">简洁直观的使用体验</p>
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="screenshots/import.png" alt="导入视频" loading="lazy">
+          <div class="caption">导入视频 - 支持多平台链接和本地文件</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="screenshots/tap-word.png" alt="点词查询" loading="lazy">
+          <div class="caption">点词查询 - 点击字幕即时查词</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="screenshots/word-card.png" alt="单词卡片" loading="lazy">
+          <div class="caption">单词卡片 - 关联视频上下文</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="screenshots/wordbook.png" alt="生词本" loading="lazy">
+          <div class="caption">生词本 - 统一管理已保存单词</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="screenshots/review.png" alt="科学复习" loading="lazy">
+          <div class="caption">科学复习 - SM-2 算法智能安排</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>开始你的英语学习之旅</h2>
+    <p>下载 Video Vocab，把喜欢的视频变成最好的英语老师</p>
+    <div class="download-group">
+      <a class="btn btn-primary" href="https://github.com/liudong02/vedio_vocap_app/releases/latest">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        前往下载页面
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>Video Vocab &copy; 2024 &mdash; 开源项目，欢迎 <a href="https://github.com/liudong02/vedio_vocap_app">Star</a></p>
+  </footer>
+
+</body>
+</html>
