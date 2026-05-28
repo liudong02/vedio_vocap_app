@@ -48,11 +48,10 @@
 
 | 平台 | 下载 |
 |------|------|
-| Android | [APK 下载](https://example.com) |
-| iOS | 开发中 |
-| macOS | [App 下载](https://example.com) |
-
-> 下载链接待更新
+| Android | [APK 下载](https://github.com/liudong02/vedio_vocap_app/releases/latest/download/VideoVocab-android.apk) |
+| iOS | [App 下载](https://github.com/liudong02/vedio_vocap_app/releases/latest/download/VideoVocab-iOS.zip) |
+| macOS | [App 下载](https://github.com/liudong02/vedio_vocap_app/releases/latest/download/VideoVocab-macOS.zip) |
+| Windows | [App 下载](https://github.com/liudong02/vedio_vocap_app/releases/latest/download/VideoVocab-Windows.zip) |
 
 ## 使用流程
 

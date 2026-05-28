@@ -1,6 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/upgrade_service.dart';
 
@@ -167,16 +167,122 @@ class SettingsScreen extends StatelessWidget {
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
-              final url = update.platformDownloadUrl;
-              if (url != null) {
-                launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-              }
+              _startUpgrade(context, update);
             },
             child: const Text('立即更新'),
           ),
         ],
       ),
     );
+  }
+
+  void _startUpgrade(BuildContext context, UpdateInfo update) {
+    if (Platform.isIOS) {
+      UpgradeService.downloadAndInstall(
+        update,
+        state: ValueNotifier(
+            const UpgradeState(step: UpgradeStep.downloading)),
+      );
+      return;
+    }
+
+    final stateNotifier = ValueNotifier<UpgradeState>(
+      const UpgradeState(step: UpgradeStep.downloading, progress: 0),
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: ValueListenableBuilder<UpgradeState>(
+          valueListenable: stateNotifier,
+          builder: (context, state, _) {
+            return AlertDialog(
+              title: const Text('正在更新'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _UpgradeStepRow(
+                    label: '下载更新包',
+                    stepState: _stepState(state, UpgradeStep.downloading),
+                  ),
+                  if (state.step == UpgradeStep.downloading &&
+                      state.progress != null)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          left: 36, right: 8, bottom: 8),
+                      child: LinearProgressIndicator(
+                          value: state.progress),
+                    ),
+                  if (!Platform.isAndroid) ...[
+                    _UpgradeStepRow(
+                      label: '解压文件',
+                      stepState: _stepState(state, UpgradeStep.extracting),
+                    ),
+                    _UpgradeStepRow(
+                      label: '安装更新',
+                      stepState: _stepState(state, UpgradeStep.installing),
+                    ),
+                    _UpgradeStepRow(
+                      label: '重启应用',
+                      stepState: _stepState(state, UpgradeStep.restarting),
+                    ),
+                  ],
+                  if (Platform.isAndroid)
+                    _UpgradeStepRow(
+                      label: '安装应用',
+                      stepState: _stepState(state, UpgradeStep.installing),
+                    ),
+                  if (state.step == UpgradeStep.error) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      state.error ?? '未知错误',
+                      style: const TextStyle(color: Colors.red, fontSize: 13),
+                    ),
+                  ],
+                ],
+              ),
+              actions: [
+                if (state.step == UpgradeStep.error ||
+                    state.step == UpgradeStep.done)
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('关闭'),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+
+    UpgradeService.downloadAndInstall(update, state: stateNotifier);
+  }
+
+  _StepState _stepState(UpgradeState current, UpgradeStep target) {
+    final steps = Platform.isAndroid
+        ? [UpgradeStep.downloading, UpgradeStep.installing, UpgradeStep.done]
+        : [
+            UpgradeStep.downloading,
+            UpgradeStep.extracting,
+            UpgradeStep.installing,
+            UpgradeStep.restarting,
+            UpgradeStep.done,
+          ];
+
+    final currentIdx = steps.indexOf(current.step);
+    final targetIdx = steps.indexOf(target);
+
+    if (current.step == UpgradeStep.error) {
+      if (targetIdx <= currentIdx || targetIdx == -1) return _StepState.error;
+      return _StepState.pending;
+    }
+
+    if (targetIdx < currentIdx) return _StepState.completed;
+    if (targetIdx == currentIdx) return _StepState.active;
+    return _StepState.pending;
   }
 
   void _showAbout(BuildContext context) async {
@@ -205,6 +311,57 @@ class SettingsScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _StepState { pending, active, completed, error }
+
+class _UpgradeStepRow extends StatelessWidget {
+  final String label;
+  final _StepState stepState;
+
+  const _UpgradeStepRow({required this.label, required this.stepState});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: switch (stepState) {
+              _StepState.completed => const Icon(
+                  Icons.check_circle, color: Colors.green, size: 20),
+              _StepState.active => const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child:
+                      CircularProgressIndicator(strokeWidth: 2)),
+              _StepState.error => const Icon(
+                  Icons.error, color: Colors.red, size: 20),
+              _StepState.pending => Icon(
+                  Icons.radio_button_unchecked,
+                  color: Colors.grey[400],
+                  size: 20),
+            },
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: TextStyle(
+              color: stepState == _StepState.pending
+                  ? Colors.grey
+                  : null,
+              fontWeight: stepState == _StepState.active
+                  ? FontWeight.w600
+                  : null,
+            ),
           ),
         ],
       ),
