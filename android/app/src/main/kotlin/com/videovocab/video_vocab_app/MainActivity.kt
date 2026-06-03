@@ -15,7 +15,9 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class MainActivity : FlutterActivity() {
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    companion object {
+        private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -291,8 +293,4 @@ class MainActivity : FlutterActivity() {
         File(inputPath).delete()
     }
 
-    override fun onDestroy() {
-        scope.cancel()
-        super.onDestroy()
-    }
 }

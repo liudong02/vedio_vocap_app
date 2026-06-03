@@ -18,15 +18,16 @@ final videoImportServiceProvider = Provider<VideoImportService>((ref) {
   );
 });
 
-enum ImportStep { extracting, modelDownloading, downloading, subtitling, importing, done, error }
+enum ImportStep { extracting, modelDownloading, downloading, subtitling, importing, done, doneWithoutSubtitle, error }
 
 class ImportState {
   final ImportStep step;
   final String message;
   final double? progress;
   final bool needsModelDownload;
+  final String? videoId;
 
-  const ImportState(this.step, this.message, [this.progress, this.needsModelDownload = false]);
+  const ImportState(this.step, this.message, [this.progress, this.needsModelDownload = false, this.videoId]);
 }
 
 class VideoMeta {
@@ -297,7 +298,11 @@ class VideoImportService {
       sourceUrl: url,
     );
 
-    state.value = const ImportState(ImportStep.done, '导入完成');
+    if (subtitlePath != null) {
+      state.value = ImportState(ImportStep.done, '导入完成', null, false, id);
+    } else {
+      state.value = ImportState(ImportStep.doneWithoutSubtitle, '视频已导入，字幕生成失败', null, false, id);
+    }
   }
 
   Future<void> _downloadModelStep(ValueNotifier<ImportState> state) async {
@@ -380,7 +385,11 @@ class VideoImportService {
         sourceUrl: url,
       );
 
-      state.value = const ImportState(ImportStep.done, '导入完成');
+      if (subtitlePath != null) {
+        state.value = ImportState(ImportStep.done, '导入完成', null, false, id);
+      } else {
+        state.value = ImportState(ImportStep.doneWithoutSubtitle, '视频已导入，字幕生成失败', null, false, id);
+      }
     } catch (e) {
       debugPrint('[Import] Toutiao import error: $e');
       if (e is! Exception || !state.value.message.contains('模型下载')) {
@@ -502,12 +511,54 @@ class VideoImportService {
             'https://www.bilibili.com/video/$bvid/?p=${selectedPage.page}',
       );
 
-      state.value = const ImportState(ImportStep.done, '导入完成');
+      if (subtitlePath != null) {
+        state.value = ImportState(ImportStep.done, '导入完成', null, false, id);
+      } else {
+        state.value = ImportState(ImportStep.doneWithoutSubtitle, '视频已导入，字幕生成失败', null, false, id);
+      }
     } catch (e) {
       debugPrint('[Import] Bilibili import error: $e');
       if (e is! Exception || !state.value.message.contains('模型下载')) {
         state.value = ImportState(ImportStep.error, 'B站导入异常: $e');
       }
     }
+  }
+
+  Future<String?> regenerateSubtitlesForVideo(
+    String videoId, [
+    ValueNotifier<ImportState>? state,
+  ]) async {
+    final video = await _repo.getVideo(videoId);
+    if (video == null) return null;
+
+    if (_isMobile && !(await _whisper.isModelDownloaded())) {
+      state?.value = const ImportState(ImportStep.modelDownloading, '下载字幕模型...', 0.0, true);
+      await _whisper.downloadModel(onProgress: (p) {
+        state?.value = ImportState(
+          ImportStep.modelDownloading, '下载字幕模型: ${(p * 100).toInt()}%', p, true,
+        );
+      });
+    }
+
+    state?.value = const ImportState(ImportStep.subtitling, '生成字幕中...');
+    final subtitlePath = await generateSubtitles(
+      video.filePath, videoId,
+      onStatus: (message, progress) {
+        state?.value = ImportState(ImportStep.subtitling, message, progress);
+      },
+      onProgress: (p) {
+        state?.value = ImportState(
+          ImportStep.subtitling, '生成字幕: ${(p * 100).toInt()}%', p,
+        );
+      },
+    );
+
+    if (subtitlePath != null) {
+      await _repo.updateSubtitlePath(videoId, subtitlePath);
+      state?.value = ImportState(ImportStep.done, '字幕生成完成', null, false, videoId);
+    } else {
+      state?.value = ImportState(ImportStep.doneWithoutSubtitle, '字幕生成失败', null, false, videoId);
+    }
+    return subtitlePath;
   }
 }

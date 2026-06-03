@@ -202,12 +202,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       const ImportState(ImportStep.extracting, '准备中...'),
     );
 
+    void onStateChanged() {
+      if (!context.mounted) return;
+      if (stateNotifier.value.step == ImportStep.done) {
+        Navigator.of(context, rootNavigator: true).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('视频导入成功')),
+        );
+        stateNotifier.removeListener(onStateChanged);
+      }
+    }
+    stateNotifier.addListener(onStateChanged);
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => _ImportProgressDialog(
         state: stateNotifier,
-        onCancel: () => Navigator.pop(ctx),
+        onCancel: () {
+          stateNotifier.removeListener(onStateChanged);
+          Navigator.pop(ctx);
+        },
+        onRetrySubtitle: (videoId) {
+          stateNotifier.value = const ImportState(ImportStep.subtitling, '重新生成字幕中...');
+          ref.read(videoImportServiceProvider)
+              .regenerateSubtitlesForVideo(videoId, stateNotifier);
+        },
       ),
     );
 
@@ -215,15 +235,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       text,
       stateNotifier,
       onSelectPage: (pages) => _showPageSelector(context, pages),
-    ).then((_) {
-      if (context.mounted &&
-          stateNotifier.value.step == ImportStep.done) {
-        Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('视频导入成功')),
-        );
-      }
-    }).catchError((e) {
+    ).catchError((e) {
       debugPrint('[Import] Unhandled error: $e');
       stateNotifier.value = ImportState(ImportStep.error, '导入异常: $e');
     });
@@ -426,8 +438,9 @@ class _VideoCard extends ConsumerWidget {
 class _ImportProgressDialog extends StatelessWidget {
   final ValueNotifier<ImportState> state;
   final VoidCallback onCancel;
+  final void Function(String videoId)? onRetrySubtitle;
 
-  const _ImportProgressDialog({required this.state, required this.onCancel});
+  const _ImportProgressDialog({required this.state, required this.onCancel, this.onRetrySubtitle});
 
   List<_StepInfo> _buildSteps(ImportState importState) {
     final steps = <_StepInfo>[
@@ -464,6 +477,15 @@ class _ImportProgressDialog extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(child: Text(importState.message,
                         style: const TextStyle(color: Colors.red))),
+                  ],
+                ),
+              ] else if (importState.step == ImportStep.doneWithoutSubtitle) ...[
+                Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(importState.message,
+                        style: const TextStyle(color: Colors.orange))),
                   ],
                 ),
               ] else ...[
@@ -510,7 +532,13 @@ class _ImportProgressDialog extends StatelessWidget {
           actions: [
             if (importState.step == ImportStep.error)
               FilledButton(onPressed: onCancel, child: const Text('关闭'))
-            else if (importState.step != ImportStep.done)
+            else if (importState.step == ImportStep.doneWithoutSubtitle) ...[
+              TextButton(onPressed: onCancel, child: const Text('跳过')),
+              FilledButton(
+                onPressed: () => onRetrySubtitle?.call(importState.videoId!),
+                child: const Text('重新生成字幕'),
+              ),
+            ] else if (importState.step != ImportStep.done)
               TextButton(onPressed: onCancel, child: const Text('取消')),
           ],
         );

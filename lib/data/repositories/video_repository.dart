@@ -163,6 +163,10 @@ class VideoRepository {
     return destPath;
   }
 
+  Future<void> updateSubtitlePath(String videoId, String path) async {
+    await _db.updateVideo(videoId, VideosCompanion(subtitlePath: Value(path)));
+  }
+
   Future<void> updateSubtitleOffset(String videoId, int offsetMs) async {
     await _db.updateVideo(videoId, VideosCompanion(subtitleOffsetMs: Value(offsetMs)));
   }

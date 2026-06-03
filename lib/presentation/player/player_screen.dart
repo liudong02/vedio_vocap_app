@@ -5,6 +5,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/repositories/video_repository.dart';
 import '../../services/player_service.dart';
+import '../../services/video_import_service.dart';
 import 'subtitle_overlay.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
@@ -176,6 +177,8 @@ class _TopBar extends ConsumerWidget {
             },
           ),
           const Spacer(),
+          _GenerateSubtitleButton(videoId: videoId),
+          const SizedBox(width: 8),
           _SubtitleOffsetButton(videoId: videoId),
           const SizedBox(width: 8),
           _ImportSubtitleButton(videoId: videoId),
@@ -280,6 +283,69 @@ class _OffsetDialogState extends State<_OffsetDialog> {
         ),
       ],
     );
+  }
+}
+
+class _GenerateSubtitleButton extends ConsumerWidget {
+  final String videoId;
+  const _GenerateSubtitleButton({required this.videoId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _ControlButton(
+      icon: Icons.auto_fix_high_rounded,
+      tooltip: '生成字幕',
+      onTap: () => _generate(context, ref),
+    );
+  }
+
+  Future<void> _generate(BuildContext context, WidgetRef ref) async {
+    final stateNotifier = ValueNotifier<ImportState>(
+      const ImportState(ImportStep.subtitling, '生成字幕中...'),
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => ValueListenableBuilder<ImportState>(
+        valueListenable: stateNotifier,
+        builder: (context, state, _) => AlertDialog(
+          title: const Text('生成字幕'),
+          content: Row(
+            children: [
+              if (state.step == ImportStep.done)
+                const Icon(Icons.check_circle, color: Colors.green, size: 20)
+              else if (state.step == ImportStep.doneWithoutSubtitle || state.step == ImportStep.error)
+                const Icon(Icons.error_outline, color: Colors.red, size: 20)
+              else
+                const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              const SizedBox(width: 12),
+              Expanded(child: Text(state.message)),
+            ],
+          ),
+          actions: [
+            if (state.step == ImportStep.done || state.step == ImportStep.doneWithoutSubtitle || state.step == ImportStep.error)
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('关闭'),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    final path = await ref.read(videoImportServiceProvider)
+        .regenerateSubtitlesForVideo(videoId, stateNotifier);
+
+    if (path != null && context.mounted) {
+      final video = await ref.read(videoRepositoryProvider).getVideo(videoId);
+      if (video != null) {
+        await ref.read(playerNotifierProvider.notifier).loadVideo(
+          videoPath: video.filePath,
+          subtitlePath: path,
+        );
+      }
+    }
   }
 }
 
