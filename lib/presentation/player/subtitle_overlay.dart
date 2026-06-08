@@ -45,7 +45,7 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
       fontFamily: 'Inter',
       color: Colors.white,
       fontSize: fontSize,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w900,
       letterSpacing: 0.3,
       height: 1.35,
       shadows: _subtitleShadows,
@@ -108,16 +108,20 @@ class _SubtitleOverlayState extends ConsumerState<SubtitleOverlay> {
 
   static double _subtitleFontSize(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
-    if (w < 600) return 16;
-    if (w < 1024) return 20;
-    return 24;
+    if (w < 600) return 20;
+    if (w < 1024) return 24;
+    return 28;
   }
 
   static const _subtitleShadows = [
-    Shadow(offset: Offset(-1.5, -1.5), blurRadius: 1, color: Colors.black),
-    Shadow(offset: Offset(1.5, -1.5), blurRadius: 1, color: Colors.black),
-    Shadow(offset: Offset(-1.5, 1.5), blurRadius: 1, color: Colors.black),
-    Shadow(offset: Offset(1.5, 1.5), blurRadius: 1, color: Colors.black),
-    Shadow(blurRadius: 4, color: Color(0xDD000000)),
+    Shadow(offset: Offset(-2, -2), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(2, -2), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(-2, 2), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(2, 2), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(-2, 0), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(2, 0), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(0, -2), blurRadius: 1, color: Colors.black),
+    Shadow(offset: Offset(0, 2), blurRadius: 1, color: Colors.black),
+    Shadow(blurRadius: 4, color: Colors.black),
   ];
 }
