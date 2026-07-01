@@ -92,7 +92,7 @@ jobs:
       - name: Package macOS app
         run: |
           cd build/macos/Build/Products/Release
-          zip -r -y VideoVocab-macOS.zip "video_vocab.app"
+          zip -r -y VideoVocab-macOS.zip *.app
 
       - uses: actions/upload-artifact@v4
         with:
