@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../data/database/app_database.dart';
 import '../../data/models/word_definition.dart';
 import '../../data/repositories/word_repository.dart';
+import '../widgets/grade_buttons.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/gradient_icon.dart';
 import '../widgets/soft_card.dart';
@@ -62,44 +63,46 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
-      child: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            // Header
-            _buildHeader(context),
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // Header
+              _buildHeader(context),
 
-            // Progress bar
-            if (!_sessionDone && !_loading && _dueCards.isNotEmpty)
-              _buildProgressBar(),
+              // Progress bar
+              if (!_sessionDone && !_loading && _dueCards.isNotEmpty)
+                _buildProgressBar(),
 
-            // Body
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _sessionDone
-                      ? _DoneView(
-                          reviewedCount: _dueCards.length,
-                          onReload: () {
-                            setState(() {
-                              _currentIndex = 0;
-                              _revealed = false;
-                              _loading = true;
-                              _sessionDone = false;
-                            });
-                            _loadDueCards();
-                          },
-                        )
-                      : _FlashCard(
-                          card: _currentCard,
-                          revealed: _revealed,
-                          onReveal: _reveal,
-                          onGrade: _grade,
-                        ),
-            ),
-          ],
+              // Body
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _sessionDone
+                        ? _DoneView(
+                            reviewedCount: _dueCards.length,
+                            onReload: () {
+                              setState(() {
+                                _currentIndex = 0;
+                                _revealed = false;
+                                _loading = true;
+                                _sessionDone = false;
+                              });
+                              _loadDueCards();
+                            },
+                          )
+                        : _FlashCard(
+                            card: _currentCard,
+                            revealed: _revealed,
+                            onReveal: _reveal,
+                            onGrade: _grade,
+                          ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -107,10 +110,15 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      padding: const EdgeInsets.fromLTRB(8, 8, 20, 8),
       child: Row(
         children: [
-          Text('今日复习', style: Theme.of(context).textTheme.headlineMedium),
+          IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const SizedBox(width: 4),
+          Text('今日复习', style: Theme.of(context).textTheme.titleLarge),
           const Spacer(),
           if (!_sessionDone && !_loading && _dueCards.isNotEmpty)
             Container(
@@ -342,7 +350,7 @@ class _FlashCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: revealed
-              ? _GradeButtons(onGrade: onGrade)
+              ? GradeButtons(onGrade: onGrade)
               : SizedBox(
                   width: double.infinity,
                   child: GradientButton(
@@ -353,96 +361,6 @@ class _FlashCard extends StatelessWidget {
                 ),
         ),
       ],
-    );
-  }
-}
-
-class _GradeButtons extends StatelessWidget {
-  final void Function(int grade) onGrade;
-  const _GradeButtons({required this.onGrade});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _GradeBtn(
-            label: '忘记',
-            sublabel: '重来',
-            color: AppColors.gradeAgain,
-            onTap: () => onGrade(0),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _GradeBtn(
-            label: '模糊',
-            sublabel: '加强',
-            color: AppColors.gradeHard,
-            onTap: () => onGrade(3),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _GradeBtn(
-            label: '记得',
-            sublabel: '稍难',
-            color: AppColors.gradeGood,
-            onTap: () => onGrade(4),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _GradeBtn(
-            label: '简单',
-            sublabel: '轻松',
-            color: AppColors.gradeEasy,
-            onTap: () => onGrade(5),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _GradeBtn extends StatelessWidget {
-  final String label;
-  final String sublabel;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _GradeBtn({
-    required this.label,
-    required this.sublabel,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 68,
-        decoration: BoxDecoration(
-          color: color.withAlpha(20),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withAlpha(76)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600, color: color)),
-            const SizedBox(height: 2),
-            Text(sublabel,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, color: color.withAlpha(180))),
-          ],
-        ),
-      ),
     );
   }
 }

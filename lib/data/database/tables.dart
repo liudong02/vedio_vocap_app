@@ -60,3 +60,31 @@ class DictionaryCache extends Table {
   @override
   Set<Column> get primaryKey => {word};
 }
+
+@DataClassName('WordBankEntry')
+class WordBankItems extends Table {
+  IntColumn get wordIndex => integer()();
+  TextColumn get word => text()();
+  TextColumn get level => text()();
+  IntColumn get status => integer().withDefault(const Constant(0))();
+  RealColumn get easeFactor => real().withDefault(const Constant(2.5))();
+  IntColumn get interval => integer().withDefault(const Constant(1))();
+  IntColumn get repetitions => integer().withDefault(const Constant(0))();
+  DateTimeColumn get nextReviewAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {wordIndex};
+}
+
+@DataClassName('ChallengeProgressEntry')
+class ChallengeProgress extends Table {
+  IntColumn get id => integer().withDefault(const Constant(1))();
+  IntColumn get totalScanned => integer().withDefault(const Constant(0))();
+  IntColumn get totalMastered => integer().withDefault(const Constant(0))();
+  IntColumn get todayLearned => integer().withDefault(const Constant(0))();
+  IntColumn get streakDays => integer().withDefault(const Constant(0))();
+  TextColumn get lastActiveDay => text().withDefault(const Constant(''))();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}

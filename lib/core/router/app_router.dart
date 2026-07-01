@@ -5,6 +5,9 @@ import '../../presentation/home/home_screen.dart';
 import '../../presentation/player/player_screen.dart';
 import '../../presentation/library/library_screen.dart';
 import '../../presentation/review/review_screen.dart';
+import '../../presentation/challenge/challenge_dashboard.dart';
+import '../../presentation/challenge/fast_scan_screen.dart';
+import '../../presentation/challenge/wordbank_review_screen.dart';
 import '../../presentation/settings/settings_screen.dart';
 import '../theme/app_colors.dart';
 import '../../presentation/widgets/gradient_icon.dart';
@@ -25,8 +28,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const LibraryScreen(),
           ),
           GoRoute(
-            path: '/review',
-            builder: (context, state) => const ReviewScreen(),
+            path: '/challenge',
+            builder: (context, state) => const ChallengeDashboard(),
           ),
           GoRoute(
             path: '/settings',
@@ -39,6 +42,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => PlayerScreen(
           videoId: state.pathParameters['videoId']!,
         ),
+      ),
+      GoRoute(
+        path: '/challenge/scan',
+        builder: (context, state) => const FastScanScreen(),
+      ),
+      GoRoute(
+        path: '/challenge/review',
+        builder: (context, state) => const WordBankReviewScreen(),
+      ),
+      GoRoute(
+        path: '/review',
+        builder: (context, state) => const ReviewScreen(),
       ),
     ],
   );
@@ -53,7 +68,7 @@ class MainScaffold extends ConsumerWidget {
     final location = GoRouterState.of(context).uri.path;
     final currentIndex = switch (location) {
       '/library' => 1,
-      '/review' => 2,
+      '/challenge' => 2,
       '/settings' => 3,
       _ => 0,
     };
@@ -69,7 +84,7 @@ class MainScaffold extends ConsumerWidget {
             case 1:
               context.go('/library');
             case 2:
-              context.go('/review');
+              context.go('/challenge');
             case 3:
               context.go('/settings');
           }
@@ -118,9 +133,9 @@ class _AppBottomNavBar extends StatelessWidget {
                 onTap: () => onTap(1),
               ),
               _NavItem(
-                icon: Icons.school_outlined,
-                activeIcon: Icons.school,
-                label: '复习',
+                icon: Icons.rocket_launch_outlined,
+                activeIcon: Icons.rocket_launch,
+                label: '背单词',
                 isActive: currentIndex == 2,
                 onTap: () => onTap(2),
               ),

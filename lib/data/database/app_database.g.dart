@@ -1768,6 +1768,787 @@ class DictionaryCacheCompanion extends UpdateCompanion<DictionaryCacheEntry> {
   }
 }
 
+class $WordBankItemsTable extends WordBankItems
+    with TableInfo<$WordBankItemsTable, WordBankEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WordBankItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _wordIndexMeta =
+      const VerificationMeta('wordIndex');
+  @override
+  late final GeneratedColumn<int> wordIndex = GeneratedColumn<int>(
+      'word_index', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _wordMeta = const VerificationMeta('word');
+  @override
+  late final GeneratedColumn<String> word = GeneratedColumn<String>(
+      'word', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _levelMeta = const VerificationMeta('level');
+  @override
+  late final GeneratedColumn<String> level = GeneratedColumn<String>(
+      'level', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<int> status = GeneratedColumn<int>(
+      'status', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _easeFactorMeta =
+      const VerificationMeta('easeFactor');
+  @override
+  late final GeneratedColumn<double> easeFactor = GeneratedColumn<double>(
+      'ease_factor', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(2.5));
+  static const VerificationMeta _intervalMeta =
+      const VerificationMeta('interval');
+  @override
+  late final GeneratedColumn<int> interval = GeneratedColumn<int>(
+      'interval', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _repetitionsMeta =
+      const VerificationMeta('repetitions');
+  @override
+  late final GeneratedColumn<int> repetitions = GeneratedColumn<int>(
+      'repetitions', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _nextReviewAtMeta =
+      const VerificationMeta('nextReviewAt');
+  @override
+  late final GeneratedColumn<DateTime> nextReviewAt = GeneratedColumn<DateTime>(
+      'next_review_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        wordIndex,
+        word,
+        level,
+        status,
+        easeFactor,
+        interval,
+        repetitions,
+        nextReviewAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'word_bank_items';
+  @override
+  VerificationContext validateIntegrity(Insertable<WordBankEntry> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('word_index')) {
+      context.handle(_wordIndexMeta,
+          wordIndex.isAcceptableOrUnknown(data['word_index']!, _wordIndexMeta));
+    }
+    if (data.containsKey('word')) {
+      context.handle(
+          _wordMeta, word.isAcceptableOrUnknown(data['word']!, _wordMeta));
+    } else if (isInserting) {
+      context.missing(_wordMeta);
+    }
+    if (data.containsKey('level')) {
+      context.handle(
+          _levelMeta, level.isAcceptableOrUnknown(data['level']!, _levelMeta));
+    } else if (isInserting) {
+      context.missing(_levelMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    }
+    if (data.containsKey('ease_factor')) {
+      context.handle(
+          _easeFactorMeta,
+          easeFactor.isAcceptableOrUnknown(
+              data['ease_factor']!, _easeFactorMeta));
+    }
+    if (data.containsKey('interval')) {
+      context.handle(_intervalMeta,
+          interval.isAcceptableOrUnknown(data['interval']!, _intervalMeta));
+    }
+    if (data.containsKey('repetitions')) {
+      context.handle(
+          _repetitionsMeta,
+          repetitions.isAcceptableOrUnknown(
+              data['repetitions']!, _repetitionsMeta));
+    }
+    if (data.containsKey('next_review_at')) {
+      context.handle(
+          _nextReviewAtMeta,
+          nextReviewAt.isAcceptableOrUnknown(
+              data['next_review_at']!, _nextReviewAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {wordIndex};
+  @override
+  WordBankEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WordBankEntry(
+      wordIndex: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}word_index'])!,
+      word: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}word'])!,
+      level: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}level'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}status'])!,
+      easeFactor: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}ease_factor'])!,
+      interval: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}interval'])!,
+      repetitions: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}repetitions'])!,
+      nextReviewAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}next_review_at']),
+    );
+  }
+
+  @override
+  $WordBankItemsTable createAlias(String alias) {
+    return $WordBankItemsTable(attachedDatabase, alias);
+  }
+}
+
+class WordBankEntry extends DataClass implements Insertable<WordBankEntry> {
+  final int wordIndex;
+  final String word;
+  final String level;
+  final int status;
+  final double easeFactor;
+  final int interval;
+  final int repetitions;
+  final DateTime? nextReviewAt;
+  const WordBankEntry(
+      {required this.wordIndex,
+      required this.word,
+      required this.level,
+      required this.status,
+      required this.easeFactor,
+      required this.interval,
+      required this.repetitions,
+      this.nextReviewAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['word_index'] = Variable<int>(wordIndex);
+    map['word'] = Variable<String>(word);
+    map['level'] = Variable<String>(level);
+    map['status'] = Variable<int>(status);
+    map['ease_factor'] = Variable<double>(easeFactor);
+    map['interval'] = Variable<int>(interval);
+    map['repetitions'] = Variable<int>(repetitions);
+    if (!nullToAbsent || nextReviewAt != null) {
+      map['next_review_at'] = Variable<DateTime>(nextReviewAt);
+    }
+    return map;
+  }
+
+  WordBankItemsCompanion toCompanion(bool nullToAbsent) {
+    return WordBankItemsCompanion(
+      wordIndex: Value(wordIndex),
+      word: Value(word),
+      level: Value(level),
+      status: Value(status),
+      easeFactor: Value(easeFactor),
+      interval: Value(interval),
+      repetitions: Value(repetitions),
+      nextReviewAt: nextReviewAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextReviewAt),
+    );
+  }
+
+  factory WordBankEntry.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WordBankEntry(
+      wordIndex: serializer.fromJson<int>(json['wordIndex']),
+      word: serializer.fromJson<String>(json['word']),
+      level: serializer.fromJson<String>(json['level']),
+      status: serializer.fromJson<int>(json['status']),
+      easeFactor: serializer.fromJson<double>(json['easeFactor']),
+      interval: serializer.fromJson<int>(json['interval']),
+      repetitions: serializer.fromJson<int>(json['repetitions']),
+      nextReviewAt: serializer.fromJson<DateTime?>(json['nextReviewAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'wordIndex': serializer.toJson<int>(wordIndex),
+      'word': serializer.toJson<String>(word),
+      'level': serializer.toJson<String>(level),
+      'status': serializer.toJson<int>(status),
+      'easeFactor': serializer.toJson<double>(easeFactor),
+      'interval': serializer.toJson<int>(interval),
+      'repetitions': serializer.toJson<int>(repetitions),
+      'nextReviewAt': serializer.toJson<DateTime?>(nextReviewAt),
+    };
+  }
+
+  WordBankEntry copyWith(
+          {int? wordIndex,
+          String? word,
+          String? level,
+          int? status,
+          double? easeFactor,
+          int? interval,
+          int? repetitions,
+          Value<DateTime?> nextReviewAt = const Value.absent()}) =>
+      WordBankEntry(
+        wordIndex: wordIndex ?? this.wordIndex,
+        word: word ?? this.word,
+        level: level ?? this.level,
+        status: status ?? this.status,
+        easeFactor: easeFactor ?? this.easeFactor,
+        interval: interval ?? this.interval,
+        repetitions: repetitions ?? this.repetitions,
+        nextReviewAt:
+            nextReviewAt.present ? nextReviewAt.value : this.nextReviewAt,
+      );
+  WordBankEntry copyWithCompanion(WordBankItemsCompanion data) {
+    return WordBankEntry(
+      wordIndex: data.wordIndex.present ? data.wordIndex.value : this.wordIndex,
+      word: data.word.present ? data.word.value : this.word,
+      level: data.level.present ? data.level.value : this.level,
+      status: data.status.present ? data.status.value : this.status,
+      easeFactor:
+          data.easeFactor.present ? data.easeFactor.value : this.easeFactor,
+      interval: data.interval.present ? data.interval.value : this.interval,
+      repetitions:
+          data.repetitions.present ? data.repetitions.value : this.repetitions,
+      nextReviewAt: data.nextReviewAt.present
+          ? data.nextReviewAt.value
+          : this.nextReviewAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WordBankEntry(')
+          ..write('wordIndex: $wordIndex, ')
+          ..write('word: $word, ')
+          ..write('level: $level, ')
+          ..write('status: $status, ')
+          ..write('easeFactor: $easeFactor, ')
+          ..write('interval: $interval, ')
+          ..write('repetitions: $repetitions, ')
+          ..write('nextReviewAt: $nextReviewAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(wordIndex, word, level, status, easeFactor,
+      interval, repetitions, nextReviewAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WordBankEntry &&
+          other.wordIndex == this.wordIndex &&
+          other.word == this.word &&
+          other.level == this.level &&
+          other.status == this.status &&
+          other.easeFactor == this.easeFactor &&
+          other.interval == this.interval &&
+          other.repetitions == this.repetitions &&
+          other.nextReviewAt == this.nextReviewAt);
+}
+
+class WordBankItemsCompanion extends UpdateCompanion<WordBankEntry> {
+  final Value<int> wordIndex;
+  final Value<String> word;
+  final Value<String> level;
+  final Value<int> status;
+  final Value<double> easeFactor;
+  final Value<int> interval;
+  final Value<int> repetitions;
+  final Value<DateTime?> nextReviewAt;
+  const WordBankItemsCompanion({
+    this.wordIndex = const Value.absent(),
+    this.word = const Value.absent(),
+    this.level = const Value.absent(),
+    this.status = const Value.absent(),
+    this.easeFactor = const Value.absent(),
+    this.interval = const Value.absent(),
+    this.repetitions = const Value.absent(),
+    this.nextReviewAt = const Value.absent(),
+  });
+  WordBankItemsCompanion.insert({
+    this.wordIndex = const Value.absent(),
+    required String word,
+    required String level,
+    this.status = const Value.absent(),
+    this.easeFactor = const Value.absent(),
+    this.interval = const Value.absent(),
+    this.repetitions = const Value.absent(),
+    this.nextReviewAt = const Value.absent(),
+  })  : word = Value(word),
+        level = Value(level);
+  static Insertable<WordBankEntry> custom({
+    Expression<int>? wordIndex,
+    Expression<String>? word,
+    Expression<String>? level,
+    Expression<int>? status,
+    Expression<double>? easeFactor,
+    Expression<int>? interval,
+    Expression<int>? repetitions,
+    Expression<DateTime>? nextReviewAt,
+  }) {
+    return RawValuesInsertable({
+      if (wordIndex != null) 'word_index': wordIndex,
+      if (word != null) 'word': word,
+      if (level != null) 'level': level,
+      if (status != null) 'status': status,
+      if (easeFactor != null) 'ease_factor': easeFactor,
+      if (interval != null) 'interval': interval,
+      if (repetitions != null) 'repetitions': repetitions,
+      if (nextReviewAt != null) 'next_review_at': nextReviewAt,
+    });
+  }
+
+  WordBankItemsCompanion copyWith(
+      {Value<int>? wordIndex,
+      Value<String>? word,
+      Value<String>? level,
+      Value<int>? status,
+      Value<double>? easeFactor,
+      Value<int>? interval,
+      Value<int>? repetitions,
+      Value<DateTime?>? nextReviewAt}) {
+    return WordBankItemsCompanion(
+      wordIndex: wordIndex ?? this.wordIndex,
+      word: word ?? this.word,
+      level: level ?? this.level,
+      status: status ?? this.status,
+      easeFactor: easeFactor ?? this.easeFactor,
+      interval: interval ?? this.interval,
+      repetitions: repetitions ?? this.repetitions,
+      nextReviewAt: nextReviewAt ?? this.nextReviewAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (wordIndex.present) {
+      map['word_index'] = Variable<int>(wordIndex.value);
+    }
+    if (word.present) {
+      map['word'] = Variable<String>(word.value);
+    }
+    if (level.present) {
+      map['level'] = Variable<String>(level.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<int>(status.value);
+    }
+    if (easeFactor.present) {
+      map['ease_factor'] = Variable<double>(easeFactor.value);
+    }
+    if (interval.present) {
+      map['interval'] = Variable<int>(interval.value);
+    }
+    if (repetitions.present) {
+      map['repetitions'] = Variable<int>(repetitions.value);
+    }
+    if (nextReviewAt.present) {
+      map['next_review_at'] = Variable<DateTime>(nextReviewAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WordBankItemsCompanion(')
+          ..write('wordIndex: $wordIndex, ')
+          ..write('word: $word, ')
+          ..write('level: $level, ')
+          ..write('status: $status, ')
+          ..write('easeFactor: $easeFactor, ')
+          ..write('interval: $interval, ')
+          ..write('repetitions: $repetitions, ')
+          ..write('nextReviewAt: $nextReviewAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ChallengeProgressTable extends ChallengeProgress
+    with TableInfo<$ChallengeProgressTable, ChallengeProgressEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChallengeProgressTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1));
+  static const VerificationMeta _totalScannedMeta =
+      const VerificationMeta('totalScanned');
+  @override
+  late final GeneratedColumn<int> totalScanned = GeneratedColumn<int>(
+      'total_scanned', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _totalMasteredMeta =
+      const VerificationMeta('totalMastered');
+  @override
+  late final GeneratedColumn<int> totalMastered = GeneratedColumn<int>(
+      'total_mastered', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _todayLearnedMeta =
+      const VerificationMeta('todayLearned');
+  @override
+  late final GeneratedColumn<int> todayLearned = GeneratedColumn<int>(
+      'today_learned', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _streakDaysMeta =
+      const VerificationMeta('streakDays');
+  @override
+  late final GeneratedColumn<int> streakDays = GeneratedColumn<int>(
+      'streak_days', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _lastActiveDayMeta =
+      const VerificationMeta('lastActiveDay');
+  @override
+  late final GeneratedColumn<String> lastActiveDay = GeneratedColumn<String>(
+      'last_active_day', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(''));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        totalScanned,
+        totalMastered,
+        todayLearned,
+        streakDays,
+        lastActiveDay
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'challenge_progress';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<ChallengeProgressEntry> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('total_scanned')) {
+      context.handle(
+          _totalScannedMeta,
+          totalScanned.isAcceptableOrUnknown(
+              data['total_scanned']!, _totalScannedMeta));
+    }
+    if (data.containsKey('total_mastered')) {
+      context.handle(
+          _totalMasteredMeta,
+          totalMastered.isAcceptableOrUnknown(
+              data['total_mastered']!, _totalMasteredMeta));
+    }
+    if (data.containsKey('today_learned')) {
+      context.handle(
+          _todayLearnedMeta,
+          todayLearned.isAcceptableOrUnknown(
+              data['today_learned']!, _todayLearnedMeta));
+    }
+    if (data.containsKey('streak_days')) {
+      context.handle(
+          _streakDaysMeta,
+          streakDays.isAcceptableOrUnknown(
+              data['streak_days']!, _streakDaysMeta));
+    }
+    if (data.containsKey('last_active_day')) {
+      context.handle(
+          _lastActiveDayMeta,
+          lastActiveDay.isAcceptableOrUnknown(
+              data['last_active_day']!, _lastActiveDayMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ChallengeProgressEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChallengeProgressEntry(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      totalScanned: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}total_scanned'])!,
+      totalMastered: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}total_mastered'])!,
+      todayLearned: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}today_learned'])!,
+      streakDays: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}streak_days'])!,
+      lastActiveDay: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}last_active_day'])!,
+    );
+  }
+
+  @override
+  $ChallengeProgressTable createAlias(String alias) {
+    return $ChallengeProgressTable(attachedDatabase, alias);
+  }
+}
+
+class ChallengeProgressEntry extends DataClass
+    implements Insertable<ChallengeProgressEntry> {
+  final int id;
+  final int totalScanned;
+  final int totalMastered;
+  final int todayLearned;
+  final int streakDays;
+  final String lastActiveDay;
+  const ChallengeProgressEntry(
+      {required this.id,
+      required this.totalScanned,
+      required this.totalMastered,
+      required this.todayLearned,
+      required this.streakDays,
+      required this.lastActiveDay});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['total_scanned'] = Variable<int>(totalScanned);
+    map['total_mastered'] = Variable<int>(totalMastered);
+    map['today_learned'] = Variable<int>(todayLearned);
+    map['streak_days'] = Variable<int>(streakDays);
+    map['last_active_day'] = Variable<String>(lastActiveDay);
+    return map;
+  }
+
+  ChallengeProgressCompanion toCompanion(bool nullToAbsent) {
+    return ChallengeProgressCompanion(
+      id: Value(id),
+      totalScanned: Value(totalScanned),
+      totalMastered: Value(totalMastered),
+      todayLearned: Value(todayLearned),
+      streakDays: Value(streakDays),
+      lastActiveDay: Value(lastActiveDay),
+    );
+  }
+
+  factory ChallengeProgressEntry.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChallengeProgressEntry(
+      id: serializer.fromJson<int>(json['id']),
+      totalScanned: serializer.fromJson<int>(json['totalScanned']),
+      totalMastered: serializer.fromJson<int>(json['totalMastered']),
+      todayLearned: serializer.fromJson<int>(json['todayLearned']),
+      streakDays: serializer.fromJson<int>(json['streakDays']),
+      lastActiveDay: serializer.fromJson<String>(json['lastActiveDay']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'totalScanned': serializer.toJson<int>(totalScanned),
+      'totalMastered': serializer.toJson<int>(totalMastered),
+      'todayLearned': serializer.toJson<int>(todayLearned),
+      'streakDays': serializer.toJson<int>(streakDays),
+      'lastActiveDay': serializer.toJson<String>(lastActiveDay),
+    };
+  }
+
+  ChallengeProgressEntry copyWith(
+          {int? id,
+          int? totalScanned,
+          int? totalMastered,
+          int? todayLearned,
+          int? streakDays,
+          String? lastActiveDay}) =>
+      ChallengeProgressEntry(
+        id: id ?? this.id,
+        totalScanned: totalScanned ?? this.totalScanned,
+        totalMastered: totalMastered ?? this.totalMastered,
+        todayLearned: todayLearned ?? this.todayLearned,
+        streakDays: streakDays ?? this.streakDays,
+        lastActiveDay: lastActiveDay ?? this.lastActiveDay,
+      );
+  ChallengeProgressEntry copyWithCompanion(ChallengeProgressCompanion data) {
+    return ChallengeProgressEntry(
+      id: data.id.present ? data.id.value : this.id,
+      totalScanned: data.totalScanned.present
+          ? data.totalScanned.value
+          : this.totalScanned,
+      totalMastered: data.totalMastered.present
+          ? data.totalMastered.value
+          : this.totalMastered,
+      todayLearned: data.todayLearned.present
+          ? data.todayLearned.value
+          : this.todayLearned,
+      streakDays:
+          data.streakDays.present ? data.streakDays.value : this.streakDays,
+      lastActiveDay: data.lastActiveDay.present
+          ? data.lastActiveDay.value
+          : this.lastActiveDay,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChallengeProgressEntry(')
+          ..write('id: $id, ')
+          ..write('totalScanned: $totalScanned, ')
+          ..write('totalMastered: $totalMastered, ')
+          ..write('todayLearned: $todayLearned, ')
+          ..write('streakDays: $streakDays, ')
+          ..write('lastActiveDay: $lastActiveDay')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, totalScanned, totalMastered, todayLearned, streakDays, lastActiveDay);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChallengeProgressEntry &&
+          other.id == this.id &&
+          other.totalScanned == this.totalScanned &&
+          other.totalMastered == this.totalMastered &&
+          other.todayLearned == this.todayLearned &&
+          other.streakDays == this.streakDays &&
+          other.lastActiveDay == this.lastActiveDay);
+}
+
+class ChallengeProgressCompanion
+    extends UpdateCompanion<ChallengeProgressEntry> {
+  final Value<int> id;
+  final Value<int> totalScanned;
+  final Value<int> totalMastered;
+  final Value<int> todayLearned;
+  final Value<int> streakDays;
+  final Value<String> lastActiveDay;
+  const ChallengeProgressCompanion({
+    this.id = const Value.absent(),
+    this.totalScanned = const Value.absent(),
+    this.totalMastered = const Value.absent(),
+    this.todayLearned = const Value.absent(),
+    this.streakDays = const Value.absent(),
+    this.lastActiveDay = const Value.absent(),
+  });
+  ChallengeProgressCompanion.insert({
+    this.id = const Value.absent(),
+    this.totalScanned = const Value.absent(),
+    this.totalMastered = const Value.absent(),
+    this.todayLearned = const Value.absent(),
+    this.streakDays = const Value.absent(),
+    this.lastActiveDay = const Value.absent(),
+  });
+  static Insertable<ChallengeProgressEntry> custom({
+    Expression<int>? id,
+    Expression<int>? totalScanned,
+    Expression<int>? totalMastered,
+    Expression<int>? todayLearned,
+    Expression<int>? streakDays,
+    Expression<String>? lastActiveDay,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (totalScanned != null) 'total_scanned': totalScanned,
+      if (totalMastered != null) 'total_mastered': totalMastered,
+      if (todayLearned != null) 'today_learned': todayLearned,
+      if (streakDays != null) 'streak_days': streakDays,
+      if (lastActiveDay != null) 'last_active_day': lastActiveDay,
+    });
+  }
+
+  ChallengeProgressCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? totalScanned,
+      Value<int>? totalMastered,
+      Value<int>? todayLearned,
+      Value<int>? streakDays,
+      Value<String>? lastActiveDay}) {
+    return ChallengeProgressCompanion(
+      id: id ?? this.id,
+      totalScanned: totalScanned ?? this.totalScanned,
+      totalMastered: totalMastered ?? this.totalMastered,
+      todayLearned: todayLearned ?? this.todayLearned,
+      streakDays: streakDays ?? this.streakDays,
+      lastActiveDay: lastActiveDay ?? this.lastActiveDay,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (totalScanned.present) {
+      map['total_scanned'] = Variable<int>(totalScanned.value);
+    }
+    if (totalMastered.present) {
+      map['total_mastered'] = Variable<int>(totalMastered.value);
+    }
+    if (todayLearned.present) {
+      map['today_learned'] = Variable<int>(todayLearned.value);
+    }
+    if (streakDays.present) {
+      map['streak_days'] = Variable<int>(streakDays.value);
+    }
+    if (lastActiveDay.present) {
+      map['last_active_day'] = Variable<String>(lastActiveDay.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChallengeProgressCompanion(')
+          ..write('id: $id, ')
+          ..write('totalScanned: $totalScanned, ')
+          ..write('totalMastered: $totalMastered, ')
+          ..write('todayLearned: $todayLearned, ')
+          ..write('streakDays: $streakDays, ')
+          ..write('lastActiveDay: $lastActiveDay')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1776,12 +2557,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReviewLogsTable reviewLogs = $ReviewLogsTable(this);
   late final $DictionaryCacheTable dictionaryCache =
       $DictionaryCacheTable(this);
+  late final $WordBankItemsTable wordBankItems = $WordBankItemsTable(this);
+  late final $ChallengeProgressTable challengeProgress =
+      $ChallengeProgressTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [videos, wordCards, reviewLogs, dictionaryCache];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        videos,
+        wordCards,
+        reviewLogs,
+        dictionaryCache,
+        wordBankItems,
+        challengeProgress
+      ];
 }
 
 typedef $$VideosTableCreateCompanionBuilder = VideosCompanion Function({
@@ -2661,6 +3451,409 @@ typedef $$DictionaryCacheTableProcessedTableManager = ProcessedTableManager<
     ),
     DictionaryCacheEntry,
     PrefetchHooks Function()>;
+typedef $$WordBankItemsTableCreateCompanionBuilder = WordBankItemsCompanion
+    Function({
+  Value<int> wordIndex,
+  required String word,
+  required String level,
+  Value<int> status,
+  Value<double> easeFactor,
+  Value<int> interval,
+  Value<int> repetitions,
+  Value<DateTime?> nextReviewAt,
+});
+typedef $$WordBankItemsTableUpdateCompanionBuilder = WordBankItemsCompanion
+    Function({
+  Value<int> wordIndex,
+  Value<String> word,
+  Value<String> level,
+  Value<int> status,
+  Value<double> easeFactor,
+  Value<int> interval,
+  Value<int> repetitions,
+  Value<DateTime?> nextReviewAt,
+});
+
+class $$WordBankItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $WordBankItemsTable> {
+  $$WordBankItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get wordIndex => $composableBuilder(
+      column: $table.wordIndex, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get word => $composableBuilder(
+      column: $table.word, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get level => $composableBuilder(
+      column: $table.level, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get easeFactor => $composableBuilder(
+      column: $table.easeFactor, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get interval => $composableBuilder(
+      column: $table.interval, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get repetitions => $composableBuilder(
+      column: $table.repetitions, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get nextReviewAt => $composableBuilder(
+      column: $table.nextReviewAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$WordBankItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WordBankItemsTable> {
+  $$WordBankItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get wordIndex => $composableBuilder(
+      column: $table.wordIndex, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get word => $composableBuilder(
+      column: $table.word, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get level => $composableBuilder(
+      column: $table.level, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get easeFactor => $composableBuilder(
+      column: $table.easeFactor, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get interval => $composableBuilder(
+      column: $table.interval, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get repetitions => $composableBuilder(
+      column: $table.repetitions, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get nextReviewAt => $composableBuilder(
+      column: $table.nextReviewAt,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$WordBankItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WordBankItemsTable> {
+  $$WordBankItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get wordIndex =>
+      $composableBuilder(column: $table.wordIndex, builder: (column) => column);
+
+  GeneratedColumn<String> get word =>
+      $composableBuilder(column: $table.word, builder: (column) => column);
+
+  GeneratedColumn<String> get level =>
+      $composableBuilder(column: $table.level, builder: (column) => column);
+
+  GeneratedColumn<int> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<double> get easeFactor => $composableBuilder(
+      column: $table.easeFactor, builder: (column) => column);
+
+  GeneratedColumn<int> get interval =>
+      $composableBuilder(column: $table.interval, builder: (column) => column);
+
+  GeneratedColumn<int> get repetitions => $composableBuilder(
+      column: $table.repetitions, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get nextReviewAt => $composableBuilder(
+      column: $table.nextReviewAt, builder: (column) => column);
+}
+
+class $$WordBankItemsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $WordBankItemsTable,
+    WordBankEntry,
+    $$WordBankItemsTableFilterComposer,
+    $$WordBankItemsTableOrderingComposer,
+    $$WordBankItemsTableAnnotationComposer,
+    $$WordBankItemsTableCreateCompanionBuilder,
+    $$WordBankItemsTableUpdateCompanionBuilder,
+    (
+      WordBankEntry,
+      BaseReferences<_$AppDatabase, $WordBankItemsTable, WordBankEntry>
+    ),
+    WordBankEntry,
+    PrefetchHooks Function()> {
+  $$WordBankItemsTableTableManager(_$AppDatabase db, $WordBankItemsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WordBankItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WordBankItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WordBankItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> wordIndex = const Value.absent(),
+            Value<String> word = const Value.absent(),
+            Value<String> level = const Value.absent(),
+            Value<int> status = const Value.absent(),
+            Value<double> easeFactor = const Value.absent(),
+            Value<int> interval = const Value.absent(),
+            Value<int> repetitions = const Value.absent(),
+            Value<DateTime?> nextReviewAt = const Value.absent(),
+          }) =>
+              WordBankItemsCompanion(
+            wordIndex: wordIndex,
+            word: word,
+            level: level,
+            status: status,
+            easeFactor: easeFactor,
+            interval: interval,
+            repetitions: repetitions,
+            nextReviewAt: nextReviewAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> wordIndex = const Value.absent(),
+            required String word,
+            required String level,
+            Value<int> status = const Value.absent(),
+            Value<double> easeFactor = const Value.absent(),
+            Value<int> interval = const Value.absent(),
+            Value<int> repetitions = const Value.absent(),
+            Value<DateTime?> nextReviewAt = const Value.absent(),
+          }) =>
+              WordBankItemsCompanion.insert(
+            wordIndex: wordIndex,
+            word: word,
+            level: level,
+            status: status,
+            easeFactor: easeFactor,
+            interval: interval,
+            repetitions: repetitions,
+            nextReviewAt: nextReviewAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$WordBankItemsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $WordBankItemsTable,
+    WordBankEntry,
+    $$WordBankItemsTableFilterComposer,
+    $$WordBankItemsTableOrderingComposer,
+    $$WordBankItemsTableAnnotationComposer,
+    $$WordBankItemsTableCreateCompanionBuilder,
+    $$WordBankItemsTableUpdateCompanionBuilder,
+    (
+      WordBankEntry,
+      BaseReferences<_$AppDatabase, $WordBankItemsTable, WordBankEntry>
+    ),
+    WordBankEntry,
+    PrefetchHooks Function()>;
+typedef $$ChallengeProgressTableCreateCompanionBuilder
+    = ChallengeProgressCompanion Function({
+  Value<int> id,
+  Value<int> totalScanned,
+  Value<int> totalMastered,
+  Value<int> todayLearned,
+  Value<int> streakDays,
+  Value<String> lastActiveDay,
+});
+typedef $$ChallengeProgressTableUpdateCompanionBuilder
+    = ChallengeProgressCompanion Function({
+  Value<int> id,
+  Value<int> totalScanned,
+  Value<int> totalMastered,
+  Value<int> todayLearned,
+  Value<int> streakDays,
+  Value<String> lastActiveDay,
+});
+
+class $$ChallengeProgressTableFilterComposer
+    extends Composer<_$AppDatabase, $ChallengeProgressTable> {
+  $$ChallengeProgressTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get totalScanned => $composableBuilder(
+      column: $table.totalScanned, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get totalMastered => $composableBuilder(
+      column: $table.totalMastered, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get todayLearned => $composableBuilder(
+      column: $table.todayLearned, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get streakDays => $composableBuilder(
+      column: $table.streakDays, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get lastActiveDay => $composableBuilder(
+      column: $table.lastActiveDay, builder: (column) => ColumnFilters(column));
+}
+
+class $$ChallengeProgressTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChallengeProgressTable> {
+  $$ChallengeProgressTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get totalScanned => $composableBuilder(
+      column: $table.totalScanned,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get totalMastered => $composableBuilder(
+      column: $table.totalMastered,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get todayLearned => $composableBuilder(
+      column: $table.todayLearned,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get streakDays => $composableBuilder(
+      column: $table.streakDays, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get lastActiveDay => $composableBuilder(
+      column: $table.lastActiveDay,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$ChallengeProgressTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChallengeProgressTable> {
+  $$ChallengeProgressTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get totalScanned => $composableBuilder(
+      column: $table.totalScanned, builder: (column) => column);
+
+  GeneratedColumn<int> get totalMastered => $composableBuilder(
+      column: $table.totalMastered, builder: (column) => column);
+
+  GeneratedColumn<int> get todayLearned => $composableBuilder(
+      column: $table.todayLearned, builder: (column) => column);
+
+  GeneratedColumn<int> get streakDays => $composableBuilder(
+      column: $table.streakDays, builder: (column) => column);
+
+  GeneratedColumn<String> get lastActiveDay => $composableBuilder(
+      column: $table.lastActiveDay, builder: (column) => column);
+}
+
+class $$ChallengeProgressTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ChallengeProgressTable,
+    ChallengeProgressEntry,
+    $$ChallengeProgressTableFilterComposer,
+    $$ChallengeProgressTableOrderingComposer,
+    $$ChallengeProgressTableAnnotationComposer,
+    $$ChallengeProgressTableCreateCompanionBuilder,
+    $$ChallengeProgressTableUpdateCompanionBuilder,
+    (
+      ChallengeProgressEntry,
+      BaseReferences<_$AppDatabase, $ChallengeProgressTable,
+          ChallengeProgressEntry>
+    ),
+    ChallengeProgressEntry,
+    PrefetchHooks Function()> {
+  $$ChallengeProgressTableTableManager(
+      _$AppDatabase db, $ChallengeProgressTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChallengeProgressTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChallengeProgressTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChallengeProgressTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> totalScanned = const Value.absent(),
+            Value<int> totalMastered = const Value.absent(),
+            Value<int> todayLearned = const Value.absent(),
+            Value<int> streakDays = const Value.absent(),
+            Value<String> lastActiveDay = const Value.absent(),
+          }) =>
+              ChallengeProgressCompanion(
+            id: id,
+            totalScanned: totalScanned,
+            totalMastered: totalMastered,
+            todayLearned: todayLearned,
+            streakDays: streakDays,
+            lastActiveDay: lastActiveDay,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> totalScanned = const Value.absent(),
+            Value<int> totalMastered = const Value.absent(),
+            Value<int> todayLearned = const Value.absent(),
+            Value<int> streakDays = const Value.absent(),
+            Value<String> lastActiveDay = const Value.absent(),
+          }) =>
+              ChallengeProgressCompanion.insert(
+            id: id,
+            totalScanned: totalScanned,
+            totalMastered: totalMastered,
+            todayLearned: todayLearned,
+            streakDays: streakDays,
+            lastActiveDay: lastActiveDay,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ChallengeProgressTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ChallengeProgressTable,
+    ChallengeProgressEntry,
+    $$ChallengeProgressTableFilterComposer,
+    $$ChallengeProgressTableOrderingComposer,
+    $$ChallengeProgressTableAnnotationComposer,
+    $$ChallengeProgressTableCreateCompanionBuilder,
+    $$ChallengeProgressTableUpdateCompanionBuilder,
+    (
+      ChallengeProgressEntry,
+      BaseReferences<_$AppDatabase, $ChallengeProgressTable,
+          ChallengeProgressEntry>
+    ),
+    ChallengeProgressEntry,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2673,4 +3866,8 @@ class $AppDatabaseManager {
       $$ReviewLogsTableTableManager(_db, _db.reviewLogs);
   $$DictionaryCacheTableTableManager get dictionaryCache =>
       $$DictionaryCacheTableTableManager(_db, _db.dictionaryCache);
+  $$WordBankItemsTableTableManager get wordBankItems =>
+      $$WordBankItemsTableTableManager(_db, _db.wordBankItems);
+  $$ChallengeProgressTableTableManager get challengeProgress =>
+      $$ChallengeProgressTableTableManager(_db, _db.challengeProgress);
 }

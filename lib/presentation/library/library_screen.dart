@@ -2,12 +2,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/database/app_database.dart';
 import '../../data/models/word_definition.dart';
 import '../../data/repositories/word_repository.dart';
 import '../widgets/bottom_sheet_handle.dart';
 import '../widgets/empty_state_view.dart';
+import '../widgets/gradient_button.dart';
 import '../widgets/gradient_icon.dart';
 import '../widgets/soft_card.dart';
 
@@ -76,15 +78,31 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text('单词本', style: Theme.of(context).textTheme.headlineMedium),
-          const SizedBox(height: 4),
-          Text(
-            '共 $count 个单词',
-            style: Theme.of(context).textTheme.bodyMedium,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('单词本', style: Theme.of(context).textTheme.headlineMedium),
+                const SizedBox(height: 4),
+                Text(
+                  '共 $count 个单词',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
           ),
+          if (count > 0)
+            SizedBox(
+              height: 36,
+              child: GradientButton(
+                label: '复习',
+                icon: Icons.school_rounded,
+                height: 36,
+                onPressed: () => GoRouter.of(context).push('/review'),
+              ),
+            ),
         ],
       ),
     );

@@ -7,12 +7,12 @@ import 'tables.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [Videos, WordCards, ReviewLogs, DictionaryCache])
+@DriftDatabase(tables: [Videos, WordCards, ReviewLogs, DictionaryCache, WordBankItems, ChallengeProgress])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -26,6 +26,10 @@ class AppDatabase extends _$AppDatabase {
             await customStatement(
               'ALTER TABLE videos ADD COLUMN source_url TEXT',
             );
+          }
+          if (from < 4) {
+            await migrator.createTable(wordBankItems);
+            await migrator.createTable(challengeProgress);
           }
         },
       );
@@ -105,6 +109,85 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> insertReviewLog(ReviewLogsCompanion entry) =>
       into(reviewLogs).insert(entry);
+
+  // ── Word Bank ──────────────────────────────────────────────────────────────
+
+  Future<int> getWordBankCount() async {
+    final count = countAll();
+    final query = selectOnly(wordBankItems)..addColumns([count]);
+    final row = await query.getSingle();
+    return row.read(count) ?? 0;
+  }
+
+  Future<List<WordBankEntry>> getWordBankBatch(int startIndex, int batchSize) =>
+      (select(wordBankItems)
+            ..where((t) => t.wordIndex.isBiggerOrEqualValue(startIndex) &
+                t.status.equals(0))
+            ..orderBy([(t) => OrderingTerm.asc(t.wordIndex)])
+            ..limit(batchSize))
+          .get();
+
+  Future<List<WordBankEntry>> getWordBankDueReviews() =>
+      (select(wordBankItems)
+            ..where((t) =>
+                t.status.isIn([2, 3]) &
+                t.nextReviewAt.isSmallerOrEqualValue(DateTime.now())))
+          .get();
+
+  Future<int> getWordBankDueCount() async {
+    final count = countAll();
+    final query = selectOnly(wordBankItems)
+      ..addColumns([count])
+      ..where(wordBankItems.status.isIn([2, 3]) &
+          wordBankItems.nextReviewAt.isSmallerOrEqualValue(DateTime.now()));
+    final row = await query.getSingle();
+    return row.read(count) ?? 0;
+  }
+
+  Future<void> updateWordBankItem(int index, WordBankItemsCompanion entry) =>
+      (update(wordBankItems)..where((t) => t.wordIndex.equals(index)))
+          .write(entry);
+
+  Future<int> getWordBankStatusCount(int status) async {
+    final count = countAll();
+    final query = selectOnly(wordBankItems)
+      ..addColumns([count])
+      ..where(wordBankItems.status.equals(status));
+    final row = await query.getSingle();
+    return row.read(count) ?? 0;
+  }
+
+  Future<int> getWordBankLearnedCount() async {
+    final count = countAll();
+    final query = selectOnly(wordBankItems)
+      ..addColumns([count])
+      ..where(wordBankItems.status.isBiggerOrEqualValue(1));
+    final row = await query.getSingle();
+    return row.read(count) ?? 0;
+  }
+
+  Future<void> markWordBankMasteredByWord(String word) async {
+    await (update(wordBankItems)
+          ..where((t) =>
+              t.word.equals(word.toLowerCase()) &
+              t.status.isSmallerThanValue(4)))
+        .write(const WordBankItemsCompanion(
+      status: Value(4),
+    ));
+  }
+
+  // ── Challenge Progress ─────────────────────────────────────────────────────
+
+  Future<ChallengeProgressEntry?> getChallengeProgress() =>
+      (select(challengeProgress)..where((t) => t.id.equals(1)))
+          .getSingleOrNull();
+
+  Stream<ChallengeProgressEntry?> watchChallengeProgress() =>
+      (select(challengeProgress)..where((t) => t.id.equals(1)))
+          .watchSingleOrNull();
+
+  Future<void> upsertChallengeProgress(ChallengeProgressCompanion entry) =>
+      into(challengeProgress).insertOnConflictUpdate(entry);
 }
 
 LazyDatabase _openConnection() {

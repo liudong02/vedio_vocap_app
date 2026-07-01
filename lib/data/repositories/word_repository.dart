@@ -44,6 +44,7 @@ class WordRepository {
       videoPositionMs: videoPositionMs,
       screenshotPath: Value(screenshotPath),
     ));
+    await _db.markWordBankMasteredByWord(word);
     return id;
   }
 

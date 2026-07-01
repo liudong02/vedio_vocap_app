@@ -10,7 +10,7 @@
     <!-- Install APK updates -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <application
-        android:label="video_vocab_app"
+        android:label="果果英语"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
