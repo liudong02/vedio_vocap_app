@@ -52,6 +52,22 @@ class UpgradeService {
     'VideoVocab-Windows.zip': 'windows',
   };
 
+  // GitHub download accelerators for regions where the CDN is slow/blocked.
+  // Tried in order; the direct URL is always appended as final fallback.
+  static const _mirrorPrefixes = [
+    'https://ghfast.top/',
+    'https://mirror.ghproxy.com/',
+    'https://gh.ddlc.top/',
+  ];
+
+  static List<String> _downloadCandidates(String url) {
+    if (!url.startsWith('https://github.com/')) return [url];
+    return [
+      for (final prefix in _mirrorPrefixes) '$prefix$url',
+      url,
+    ];
+  }
+
   static Future<UpdateInfo?> checkForUpdate() async {
     try {
       final response = await http.get(
@@ -155,31 +171,49 @@ class UpgradeService {
     File file,
     void Function(double) onProgress,
   ) async {
-    final client = http.Client();
-    try {
-      final request = http.Request('GET', Uri.parse(url));
-      final response = await client.send(request);
+    final candidates = _downloadCandidates(url);
+    Object? lastError;
 
-      if (response.statusCode != 200) {
-        throw Exception('下载失败: HTTP ${response.statusCode}');
-      }
+    for (final candidate in candidates) {
+      final client = http.Client();
+      try {
+        final request = http.Request('GET', Uri.parse(candidate));
+        final response =
+            await client.send(request).timeout(const Duration(seconds: 12));
 
-      final totalBytes = response.contentLength ?? 0;
-      var receivedBytes = 0;
-      final sink = file.openWrite();
-
-      await for (final chunk in response.stream) {
-        sink.add(chunk);
-        receivedBytes += chunk.length;
-        if (totalBytes > 0) {
-          onProgress(receivedBytes / totalBytes);
+        if (response.statusCode != 200) {
+          throw Exception('HTTP ${response.statusCode}');
         }
-      }
 
-      await sink.close();
-    } finally {
-      client.close();
+        final totalBytes = response.contentLength ?? 0;
+        var receivedBytes = 0;
+        final sink = file.openWrite();
+
+        try {
+          await for (final chunk
+              in response.stream.timeout(const Duration(seconds: 30))) {
+            sink.add(chunk);
+            receivedBytes += chunk.length;
+            if (totalBytes > 0) {
+              onProgress(receivedBytes / totalBytes);
+            }
+          }
+        } finally {
+          await sink.close();
+        }
+        return;
+      } catch (e) {
+        lastError = e;
+        debugPrint('[Upgrade] download failed via $candidate: $e');
+        try {
+          if (file.existsSync()) file.deleteSync();
+        } catch (_) {}
+      } finally {
+        client.close();
+      }
     }
+
+    throw Exception('所有下载源均失败: $lastError');
   }
 
   static Future<void> _installAndroid(
