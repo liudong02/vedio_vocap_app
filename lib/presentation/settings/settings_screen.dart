@@ -208,8 +208,7 @@ class SettingsScreen extends StatelessWidget {
                     label: '下载更新包',
                     stepState: _stepState(state, UpgradeStep.downloading),
                   ),
-                  if (state.step == UpgradeStep.downloading &&
-                      state.progress != null)
+                  if (state.step == UpgradeStep.downloading)
                     Padding(
                       padding: const EdgeInsets.only(
                           left: 36, right: 8, bottom: 8),

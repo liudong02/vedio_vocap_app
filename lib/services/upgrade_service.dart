@@ -124,8 +124,7 @@ class UpgradeService {
       }
 
       // Step 1: Download
-      state.value =
-          const UpgradeState(step: UpgradeStep.downloading, progress: 0);
+      state.value = const UpgradeState(step: UpgradeStep.downloading);
       final tempDir = await getTemporaryDirectory();
       final fileName = Platform.isAndroid
           ? 'VideoVocab-update.apk'
