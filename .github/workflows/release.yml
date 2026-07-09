@@ -146,4 +146,5 @@ jobs:
         with:
           files: release/*
           generate_release_notes: true
-          draft: true
+          draft: false
+          make_latest: true
